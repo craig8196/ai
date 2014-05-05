@@ -1,0 +1,26 @@
+# World built with bzedit, available at
+# http://bzedit.bolognia.net/
+
+#!name base-0
+base
+position -200 0 0
+rotation 0
+size 30 30 0
+color 1
+end
+
+#!name base-1
+base
+position 200 0 0
+rotation 0
+size 30 30 0
+color 2
+end
+
+#!name box-4
+box
+position 120 120 0
+rotation 0
+size 30 30 9.42
+end
+

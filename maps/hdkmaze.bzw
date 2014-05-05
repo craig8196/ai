@@ -1,0 +1,136 @@
+base
+	position 380 0 0
+	rotation 0
+	size 20 20 0
+	color 2
+end
+
+base
+	position 380 380 0
+	rotation 0
+	size 20 20 0
+	color 3
+end
+
+base
+	position 380 -380 0
+	rotation 0
+	size 20 20 0
+	color 4
+end
+
+base
+	position -360 0 0
+	rotation 0
+	size 20 20 0
+	color 1
+end
+
+box
+	position 0 220 0
+	rotation 0
+	size 20 180 20
+end
+
+box
+	position 0 -220 0
+	rotation 0
+	size 20 180 20
+end
+
+box
+	position -60 -60 0
+	rotation 0
+	size 40 20 20
+end
+
+box
+	position -80 150 0
+	rotation 0
+	size 20 190 20
+end
+
+box
+	position -160 30 0
+	rotation 0
+	size 10 370 20
+end
+
+box
+	position -110 -300 0
+	rotation 0
+	size 10 100 20
+end
+
+box
+	position -100 -140 0
+	rotation 0
+	size 50 15 20
+end
+
+box
+	position -60 -255 0
+	rotation 0
+	size 10 100 20
+end
+
+box
+	position -295 30 0
+	rotation 0
+	size 15 370 20
+end
+
+box
+	position -250 -30 0
+	rotation 0
+	size 10 370 20
+end
+
+box
+	position -210 220 0
+	rotation 0
+	size 10 180 20
+end
+
+box
+	position -210 -180 0
+	rotation 0
+	size 10 160 20
+end
+
+box
+	position -185 -250 0
+	rotation 0
+	size 15 20 20
+end
+
+box
+	position -115 320 0
+	rotation 0
+	size 15 20 20
+end
+
+box
+	position -115 160 0
+	rotation 0
+	size 15 20 20
+end
+
+box
+	position -115 20 0
+	rotation 0
+	size 15 20 20
+end
+
+box
+	position -135 240 0
+	rotation 0
+	size 15 20 20
+end
+
+box
+	position -135 90 0
+	rotation 0
+	size 15 20 20
+end
+

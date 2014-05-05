@@ -1,0 +1,155 @@
+# World built by amcnabb
+
+#!name base-0
+base
+position -180 0 0
+rotation 0
+size 10 10 0
+color 1
+end
+
+#!name base-1
+base
+position 180 0 0
+rotation 0
+size 20 20 0
+color 2
+end
+
+#!name base-2
+base
+position 180 -180 0
+rotation 0
+size 20 20 0
+color 3
+end
+
+#!name base-1
+base
+position 180 180 0
+rotation 0
+size 20 20 0
+color 4
+end
+
+# Border
+
+box
+position -195 0 0
+rotation 0
+size 5 200 10
+end
+
+box
+position -100 195 0
+rotation 0
+size 90 5 10
+end
+
+box
+position -100 -195 0
+rotation 0
+size 90 5 10
+end
+
+# Central Divider
+
+box
+position 0 170 0
+rotation 0
+size 10 30 10
+end
+
+box
+position 0 -40 0
+rotation 0
+size 10 160 10
+end
+
+# Long box by base (bottom-left):
+
+box
+position -150 -60 0
+rotation 0
+size 20 110 10
+end
+
+# Center box:
+
+box
+position -70 30 0
+rotation 0
+size 40 20 10
+end
+
+# Bottom-right portion of maze:
+
+box
+position -60 -20 0
+rotation 0
+size 50 10 10
+end
+
+box
+position -95 -100 0
+rotation 0
+size 15 70 10
+end
+
+box
+position -45 -60 0
+rotation 0
+size 15 30 10
+end
+
+box
+position -45 -140 0
+rotation 0
+size 15 30 10
+end
+
+# Top-left portion of maze:
+
+box
+position -160 80 0
+rotation 0
+size 30 10 10
+end
+
+box
+position -150 120 0
+rotation 0
+size 20 10 10
+end
+
+box
+position -140 160 0
+rotation 0
+size 30 10 10
+end
+
+box
+position -100 110 0
+rotation 0
+size 10 60 10
+end
+
+# Top-right portion of maze:
+
+box
+position -20 95 0
+rotation 0
+size 10 25 10
+end
+
+box
+position -60 120 0
+rotation 0
+size 10 50 10
+end
+
+box
+position -40 165 0
+rotation 0
+size 10 25 10
+end

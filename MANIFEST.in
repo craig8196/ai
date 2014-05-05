@@ -1,0 +1,7 @@
+include rungame.sh
+include bin/bzrflag
+recursive-include tests *
+recursive-include bzagents *
+recursive-include data *.png *.ttf
+recursive-include maps *.bzw
+

@@ -1,0 +1,151 @@
+# World built by amcnabb
+
+#!name base-0
+base
+position -180 0 0
+rotation 0
+size 20 20 0
+color 1
+end
+
+#!name base-1
+base
+position 180 0 0
+rotation 0
+size 20 20 0
+color 2
+end
+
+#!name base-2
+base
+position 180 -180 0
+rotation 0
+size 20 20 0
+color 3
+end
+
+#!name base-1
+base
+position 180 180 0
+rotation 0
+size 20 20 0
+color 4
+end
+
+# Border
+
+box
+position -195 0 0
+rotation 0
+size 5 200 10
+end
+
+box
+position -100 195 0
+rotation 0
+size 90 5 10
+end
+
+box
+position -100 -195 0
+rotation 0
+size 90 5 10
+end
+
+# Central Divider
+
+box
+position 0 25 0
+rotation 0
+size 10 175 10
+end
+
+box
+position 0 -185 0
+rotation 0
+size 10 15 10
+end
+
+# Walls by Base
+
+box
+position -150 20 0
+rotation 0
+size 40 10 10
+end
+
+box
+position -120 -20 0
+rotation 0
+size 70 10 10
+end
+
+box
+position -70 20 0
+rotation 0
+size 20 30 10
+end
+
+# Big Northwest Block
+box
+position -110 110 0
+rotation 0
+size 60 60 10
+end
+
+# Mini Blocks
+box
+position -10 160 0
+rotation 0
+size 10 10 10
+end
+
+box
+position -40 120 0
+rotation 0
+size 10 10 10
+end
+
+box
+position -20 80 0
+rotation 0
+size 10 10 10
+end
+
+box
+position -40 40 0
+rotation 0
+size 10 10 10
+end
+
+box
+position -20 0 0
+rotation 0
+size 10 10 10
+end
+
+# South blocks
+
+box
+position -140 -90 0
+rotation 0
+size 30 40 10
+end
+
+box
+position -150 -170 0
+rotation 0
+size 20 20 10
+end
+
+box
+position -50 -100 0
+rotation 0
+size 40 50 10
+end
+
+box
+position -70 -160 0
+rotation 0
+size 40 10 10
+end
