@@ -1,8 +1,9 @@
 import sys
 import math
 import time
+import random
 
-from bzagents/bzrc import BZRC, Command
+from bzrc import BZRC, Command
 
 class DumbTank(object):
 
@@ -39,11 +40,11 @@ class DumbAgent(object):
 
         self.commands = []
         shoot = self.check_for_shooting
-        
+
         if self.is_turning or self.stop_moving_forward(time_diff):
-            self.is_turning = turn_counter_clockwise(self.target_angle, shoot)
+            self.is_turning = self.turn_counter_clockwise(self.target_angle, shoot)
         else:
-            self.move_forward()
+            self.move_forward(shoot)
 
         results = self.bzrc.do_commands(self.commands)
         
@@ -65,14 +66,16 @@ class DumbAgent(object):
             self.is_turning
             return True
         else:
-            return True
+            return False
         
     def move_forward(self, shoot):
         command = Command(self.index, 1, 0, shoot)
+        self.commands.append(command)
 
     def turn_counter_clockwise(self, target_angle, shoot):
         relative_angle = self.normalize_angle(target_angle - self.tank.angle)
         command = Command(self.index, 0, 2 * relative_angle, shoot)
+        self.commands.append(command)
         if relative_angle < 0.1:
             return False
         else:
@@ -96,12 +99,12 @@ def main():
         print >>sys.stderr, '%s: incorrect number of arguments' % execname
         print >>sys.stderr, 'usage: %s hostname port' % sys.argv[0]
         sys.exit(-1)
-
     # Connect.
     #bzrc = BZRC(host, int(port), debug=True)
     bzrc = BZRC(host, int(port))
 
     tank0 = DumbTank(bzrc, 0)
+    tank1 = DumbTank(bzrc, 1)
 
     prev_time = time.time()
 
@@ -109,7 +112,9 @@ def main():
     try:
         while True:
             time_diff = time.time() - prev_time
+            prev_time = time.time()
             tank0.tick(time_diff)
+            tank1.tick(time_diff)
     except KeyboardInterrupt:
         print "Exiting due to keyboard interrupt."
         bzrc.close()
