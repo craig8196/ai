@@ -23,8 +23,10 @@
 import sys
 import math
 import time
+from Gnuplot import GnuplotProcess
 
 from bzrc import BZRC, Command
+from potential_fields import *
 
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
@@ -33,6 +35,12 @@ class Agent(object):
         self.bzrc = bzrc
         self.constants = self.bzrc.get_constants()
         self.commands = []
+        self.tanks = {}
+        
+        self.WORLDSIZE = int(self.constants['worldsize'])
+        
+        self.gp = GnuplotProcess(persist=False)
+        self.gp.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
 
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
@@ -47,10 +55,37 @@ class Agent(object):
         self.commands = []
 
         for tank in mytanks:
-            self.attack_enemies(tank)
+            if tank.index == 0:
+                self.behave(tank, time_diff, True)
+            else:
+                self.attack_enemies(tank)
 
         results = self.bzrc.do_commands(self.commands)
-
+    
+    def behave(self, tank, time_diff, plot=False):
+        """Create a behavior command based on potential fields.
+        Plot the potential field if plot is True.
+        """
+        bag_o_fields = []
+        for enemy in self.enemies:
+            if enemy.status == self.constants['tankalive']:
+                bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['shotrange'])))
+        
+        def pfield_function(x, y):
+            dx = 0
+            dy = 0
+            for field_function in bag_o_fields:
+                newdx, newdy = field_function(x, y)
+                dx += newdx
+                dy += newdy
+            return dx, dy
+        
+        dx, dy = pfield_function(tank.x, tank.y)
+        self.move_to_position(tank, tank.x + dx, tank.y + dy)
+        
+        if plot:
+            self.gp.write(plot_field(pfield_function))
+    
     def attack_enemies(self, tank):
         """Find the closest enemy and chase it, shooting as you go."""
         best_enemy = None
@@ -85,6 +120,9 @@ class Agent(object):
             angle -= 2 * math.pi
         return angle
 
+class Tank(object):
+    """Just a class to hold fields."""
+    pass
 
 def main():
     # Process CLI arguments.

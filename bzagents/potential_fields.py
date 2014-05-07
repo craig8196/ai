@@ -2,77 +2,13 @@
 '''This is a demo on how to use Gnuplot for potential fields.  We've
 intentionally avoided "giving it all away."
 '''
-
 from __future__ import division
-from itertools import cycle
+
 import math
 import random
 import os
 
-try:
-    from numpy import linspace
-except ImportError:
-    # This is stolen from numpy.  If numpy is installed, you don't
-    # need this:
-    def linspace(start, stop, num=50, endpoint=True, retstep=False):
-        """Return evenly spaced numbers.
-
-        Return num evenly spaced samples from start to stop.  If
-        endpoint is True, the last sample is stop. If retstep is
-        True then return the step value used.
-        """
-        num = int(num)
-        if num <= 0:
-            return []
-        if endpoint:
-            if num == 1:
-                return [float(start)]
-            step = (stop-start)/float((num-1))
-            y = [x * step + start for x in xrange(0, num - 1)]
-            y.append(stop)
-        else:
-            step = (stop-start)/float(num)
-            y = [x * step + start for x in xrange(0, num)]
-        if retstep:
-            return y, step
-        else:
-            return y
-
-
-########################################################################
-# Constants
-
-# Output file:
-FILENAME = 'fields.gpi'
-# Size of the world (one of the "constants" in bzflag):
-WORLDSIZE = 800
-# How many samples to take along each dimension:
-SAMPLES = 50
-# Change spacing by changing the relative length of the vectors.  It looks
-# like scaling by 0.75 is pretty good, but this is adjustable:
-VEC_LEN = 0.75 * WORLDSIZE / SAMPLES
-# Animation parameters:
-ANIMATION_MIN = 0
-ANIMATION_MAX = 500
-ANIMATION_FRAMES = 100
-
-
-########################################################################
-# Field and Obstacle Definitions
-
-def generate_field_function(scale):
-    def function(x, y):
-        '''User-defined field function.'''
-        sqnorm = (x**2 + y**2)
-        if sqnorm == 0.0:
-            return 0, 0
-        else:
-            return x*scale/sqnorm, y*scale/sqnorm
-    return function
-
-OBSTACLES = [((0, 0), (-150, 0), (-150, -50), (0, -50)),
-                ((200, 100), (200, 330), (300, 330), (300, 100))]
-
+from numpy import linspace
 
 def make_circle_attraction_function(cx, cy, cr, cs):
     """cx, cy define center, cr is radius, cs is outer radius"""
@@ -148,9 +84,12 @@ def random_field(x, y):
     return magnitude*math.cos(theta), magnitude*math.sin(theta)
 
 
-
 ########################################################################
-# Helper Functions
+# Gnuplot Helper Functions
+
+WORLDSIZE = 800
+SAMPLES = 30
+VEC_LEN = 0.75 * WORLDSIZE / SAMPLES
 
 def gpi_point(x, y, vec_x, vec_y):
     '''Create the centered gpi data point (4-tuple) for a position and
@@ -214,59 +153,5 @@ def plot_field(function):
             s += '%s %s %s %s\n' % (x1, y1, x2, y2)
     s += 'e\n'
     return s
-
-
-########################################################################
-# Plot the potential fields to a file
-
-functions_to_plot = {
-    'example_field.gpi': generate_field_function(150),
-    'circle_attractive_field.gpi': make_circle_attraction_function(0, 0, 50, 300),
-    'circle_repulsion_field.gpi': make_circle_repulsion_function(0, 0, 50, 300),
-    'combined_field1.gpi': combined_field1,
-    'combined_field2.gpi': combined_field2,
-    'random_field.gpi': random_field,
-    'counterclockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, -1),
-    'clockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, 1),
-}
-
-def create_gpi_files(functions, directory):
-    """Create gpi files for each field function in functions.
-    f is dict of file name to function where function will be plotted.
-    """
-    if not os.path.exists(directory):
-        os.mkdirs(directory)
-    
-    for file_name, function in functions.iteritems():
-        with open(os.path.join(directory, file_name), 'w') as outfile:
-            print >>outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
-            print >>outfile, plot_field(function)
-
-# plot all listed functions
-create_gpi_files(functions_to_plot, 'gnuplot_fields')
-
-########################################################################
-# Animate a changing field, if the Python Gnuplot library is present
-
-try:
-    from Gnuplot import GnuplotProcess
-except ImportError:
-    print "Sorry.  You don't have the Gnuplot module installed."
-    import sys
-    sys.exit(-1)
-
-forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
-backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
-anim_points = forward_list + backward_list
-
-#~ gp = GnuplotProcess(persist=False)
-#~ gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
-#~ gp.write(draw_obstacles(OBSTACLES))
-
-#~ while True:
-    #~ gp.write(plot_field(basic_circle_attraction_field))
-#~ for scale in cycle(anim_points):
-    #~ field_function = generate_field_function(scale)
-    #~ gp.write(plot_field(field_function))
 
 # vim: et sw=4 sts=4
