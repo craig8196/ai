@@ -7,6 +7,7 @@ from __future__ import division
 from itertools import cycle
 import math
 import random
+import os
 
 try:
     from numpy import linspace
@@ -142,7 +143,11 @@ def make_tangential_function(cx, cy, cr, cs, d):
     return tangential_function
 
 def random_field(x, y):
-    return random.uniform(-1, 1), random.uniform(-1, 1)
+    magnitude = random.uniform(0, 1)
+    theta = random.uniform(0, 2*math.pi)
+    return magnitude*math.cos(theta), magnitude*math.sin(theta)
+
+
 
 ########################################################################
 # Helper Functions
@@ -225,15 +230,18 @@ functions_to_plot = {
     'clockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, 1),
 }
 
-def create_gpi_files(functions):
+def create_gpi_files(functions, directory):
     """f is dict of file name to function where function will be plotted."""
+    if not os.path.exists(directory):
+        os.mkdirs(directory)
+    
     for file_name, function in functions.iteritems():
-        with open(file_name, 'w') as outfile:
+        with open(os.path.join(directory, file_name), 'w') as outfile:
             print >>outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
             print >>outfile, plot_field(function)
 
 # plot all listed functions
-create_gpi_files(functions_to_plot)
+create_gpi_files(functions_to_plot, 'gnuplot_fields')
 
 ########################################################################
 # Animate a changing field, if the Python Gnuplot library is present
