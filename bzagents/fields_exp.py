@@ -5,6 +5,8 @@ intentionally avoided "giving it all away."
 
 from __future__ import division
 from itertools import cycle
+import math
+import random
 
 try:
     from numpy import linspace
@@ -44,14 +46,14 @@ FILENAME = 'fields.gpi'
 # Size of the world (one of the "constants" in bzflag):
 WORLDSIZE = 800
 # How many samples to take along each dimension:
-SAMPLES = 25
+SAMPLES = 50
 # Change spacing by changing the relative length of the vectors.  It looks
 # like scaling by 0.75 is pretty good, but this is adjustable:
 VEC_LEN = 0.75 * WORLDSIZE / SAMPLES
 # Animation parameters:
 ANIMATION_MIN = 0
 ANIMATION_MAX = 500
-ANIMATION_FRAMES = 50
+ANIMATION_FRAMES = 100
 
 
 ########################################################################
@@ -70,6 +72,77 @@ def generate_field_function(scale):
 OBSTACLES = [((0, 0), (-150, 0), (-150, -50), (0, -50)),
                 ((200, 100), (200, 330), (300, 330), (300, 100))]
 
+
+def make_circle_attraction_function(cx, cy, cr, cs):
+    """cx, cy define center, cr is radius, cs is outer radius"""
+    def circle_attraction_field(x, y):
+        xdiff = cx - x
+        ydiff = cy - y
+        
+        distance = math.sqrt(xdiff**2 + ydiff**2)
+        theta = math.atan2(ydiff, xdiff)
+        
+        if distance < cr:
+            return 0, 0
+        elif distance > cs:
+            return math.cos(theta), math.sin(theta)
+        else:
+            max_dist = cs - cr
+            dist_to_edge = distance - cr
+            dx = (dist_to_edge/max_dist)*math.cos(theta)
+            dy = (dist_to_edge/max_dist)*math.sin(theta)
+            return dx, dy
+    return circle_attraction_field
+
+def make_circle_repulsion_function(cx, cy, cr, cs):
+    """cx, cy define center, cr is radius, cs is outer radius"""
+    def circle_repulsion_field(x, y):
+        xdiff = cx - x
+        ydiff = cy - y
+        
+        distance = math.sqrt(xdiff**2 + ydiff**2)
+        theta = math.atan2(ydiff, xdiff)
+        
+        if distance < cr:
+            return -math.cos(theta), -math.sin(theta)
+        elif distance > cs:
+            return 0, 0
+        else:
+            max_dist = cs - cr
+            dist_to_edge = cs - distance
+            dx = -(dist_to_edge/max_dist)*math.cos(theta)
+            dy = -(dist_to_edge/max_dist)*math.sin(theta)
+            return dx, dy
+    return circle_repulsion_field
+
+def combined_field1(x, y):
+    r1 = make_circle_attraction_function(0, 0, 50, 300)(x, y)
+    r2 = make_circle_repulsion_function(0, 0, 50, 300)(x, y)
+    return r1[0] + r2[0], r1[1] + r2[1]
+
+def combined_field2(x, y):
+    r1 = make_circle_attraction_function(100, 100, 50, 300)(x, y)
+    r2 = make_circle_repulsion_function(-50, -50, 50, 150)(x, y)
+    return r1[0] + r2[0], r1[1] + r2[1]
+
+def make_tangential_function(cx, cy, cr, cs, d):
+    """cx, cy define center, cr is radius, cs is outer radius, d is -1 for counterclockwise and 1 for clockwise"""
+    def tangential_function(x, y):
+        xdiff = cx - x
+        ydiff = cy - y
+        distance = math.sqrt(xdiff**2 + ydiff**2)
+        theta = math.atan2(ydiff, xdiff)
+        theta += d*math.pi/2
+        if distance < cr or distance > cs:
+            return 0, 0
+        else:
+            dx = math.cos(theta)
+            dy = math.sin(theta)
+            return dx, dy
+    return tangential_function
+
+def random_field(x, y):
+    return random.uniform(-1, 1), random.uniform(-1, 1)
 
 ########################################################################
 # Helper Functions
@@ -141,12 +214,26 @@ def plot_field(function):
 ########################################################################
 # Plot the potential fields to a file
 
-outfile = open(FILENAME, 'w')
-print >>outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
-print >>outfile, draw_obstacles(OBSTACLES)
-field_function = generate_field_function(150)
-print >>outfile, plot_field(field_function)
+functions_to_plot = {
+    'example_field.gpi': generate_field_function(150),
+    'circle_attractive_field.gpi': make_circle_attraction_function(0, 0, 50, 300),
+    'circle_repulsion_field.gpi': make_circle_repulsion_function(0, 0, 50, 300),
+    'combined_field1.gpi': combined_field1,
+    'combined_field2.gpi': combined_field2,
+    'random_field.gpi': random_field,
+    'counterclockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, -1),
+    'clockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, 1),
+}
 
+def create_gpi_files(functions):
+    """f is dict of file name to function where function will be plotted."""
+    for file_name, function in functions.iteritems():
+        with open(file_name, 'w') as outfile:
+            print >>outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
+            print >>outfile, plot_field(function)
+
+# plot all listed functions
+create_gpi_files(functions_to_plot)
 
 ########################################################################
 # Animate a changing field, if the Python Gnuplot library is present
@@ -162,11 +249,14 @@ forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
 backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
 anim_points = forward_list + backward_list
 
-gp = GnuplotProcess(persist=False)
-gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
-gp.write(draw_obstacles(OBSTACLES))
-for scale in cycle(anim_points):
-    field_function = generate_field_function(scale)
-    gp.write(plot_field(field_function))
+#~ gp = GnuplotProcess(persist=False)
+#~ gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
+#~ gp.write(draw_obstacles(OBSTACLES))
+
+#~ while True:
+    #~ gp.write(plot_field(basic_circle_attraction_field))
+#~ for scale in cycle(anim_points):
+    #~ field_function = generate_field_function(scale)
+    #~ gp.write(plot_field(field_function))
 
 # vim: et sw=4 sts=4
