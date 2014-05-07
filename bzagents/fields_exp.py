@@ -74,8 +74,20 @@ OBSTACLES = [((0, 0), (-150, 0), (-150, -50), (0, -50)),
                 ((200, 100), (200, 330), (300, 330), (300, 100))]
 
 
+# Vector math
+def length_squared(v1, v2):
+    return (v1[0] - v2[0])**2 + (v1[1] = v2[1])**2
+
+def distance(v1, v2):
+    return math.sqrt(length_squared(v1, v2))
+
+def dot_product(v1, v2):
+    return v1[0]*v2[0] + v1[1]*v2[1]
+
 def make_circle_attraction_function(cx, cy, cr, cs):
-    """cx, cy define center, cr is radius, cs is outer radius"""
+    """cx, cy define center, cr is radius, cs is outer radius.
+    Return a function.
+    """
     def circle_attraction_field(x, y):
         xdiff = cx - x
         ydiff = cy - y
@@ -96,7 +108,9 @@ def make_circle_attraction_function(cx, cy, cr, cs):
     return circle_attraction_field
 
 def make_circle_repulsion_function(cx, cy, cr, cs):
-    """cx, cy define center, cr is radius, cs is outer radius"""
+    """cx, cy define center, cr is radius, cs is outer radius.
+    Return a function.
+    """
     def circle_repulsion_field(x, y):
         xdiff = cx - x
         ydiff = cy - y
@@ -116,18 +130,11 @@ def make_circle_repulsion_function(cx, cy, cr, cs):
             return dx, dy
     return circle_repulsion_field
 
-def combined_field1(x, y):
-    r1 = make_circle_attraction_function(0, 0, 50, 300)(x, y)
-    r2 = make_circle_repulsion_function(0, 0, 50, 300)(x, y)
-    return r1[0] + r2[0], r1[1] + r2[1]
-
-def combined_field2(x, y):
-    r1 = make_circle_attraction_function(100, 100, 50, 300)(x, y)
-    r2 = make_circle_repulsion_function(-50, -50, 50, 150)(x, y)
-    return r1[0] + r2[0], r1[1] + r2[1]
-
 def make_tangential_function(cx, cy, cr, cs, d):
-    """cx, cy define center, cr is radius, cs is outer radius, d is -1 for counterclockwise and 1 for clockwise"""
+    """cx, cy define center, cr is radius, cs is outer radius, 
+    d is -1 for counterclockwise and 1 for clockwise.
+    Return a function.
+    """
     def tangential_function(x, y):
         xdiff = cx - x
         ydiff = cy - y
@@ -146,6 +153,32 @@ def random_field(x, y):
     magnitude = random.uniform(0, 1)
     theta = random.uniform(0, 2*math.pi)
     return magnitude*math.cos(theta), magnitude*math.sin(theta)
+
+def make_line_function(x1, y1, x2, y2, parallel=1, distance=10):
+    """x1, y1 and x2, y2 are the start and end points of the line.
+    parallel determines how parallel to the line the tank is.
+    distance is the distance from the line the field is in effect.
+    Return a function.
+    """
+    def line_field(x, y):
+        len_sqrd = length_squared((x1, y1), (x2, y2))
+        # TODO finish this
+        if len_sqrd == 0.0:
+            return 
+        return 0, 0
+    return line_field
+
+def combined_field1(x, y):
+    r1 = make_circle_attraction_function(0, 0, 50, 300)(x, y)
+    r2 = make_circle_repulsion_function(0, 0, 50, 300)(x, y)
+    return r1[0] + r2[0], r1[1] + r2[1]
+
+def combined_field2(x, y):
+    r1 = make_circle_attraction_function(100, 100, 50, 300)(x, y)
+    r2 = make_circle_repulsion_function(-50, -50, 50, 150)(x, y)
+    return r1[0] + r2[0], r1[1] + r2[1]
+
+
 
 
 
@@ -255,14 +288,14 @@ except ImportError:
     import sys
     sys.exit(-1)
 
-forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
-backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
-anim_points = forward_list + backward_list
-
+#~ forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
+#~ backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
+#~ anim_points = forward_list + backward_list
+#~ 
 #~ gp = GnuplotProcess(persist=False)
 #~ gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
 #~ gp.write(draw_obstacles(OBSTACLES))
-
+#~ 
 #~ while True:
     #~ gp.write(plot_field(basic_circle_attraction_field))
 #~ for scale in cycle(anim_points):

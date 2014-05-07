@@ -52,16 +52,6 @@ def make_circle_repulsion_function(cx, cy, cr, cs):
             return dx, dy
     return circle_repulsion_field
 
-def combined_field1(x, y):
-    r1 = make_circle_attraction_function(0, 0, 50, 300)(x, y)
-    r2 = make_circle_repulsion_function(0, 0, 50, 300)(x, y)
-    return r1[0] + r2[0], r1[1] + r2[1]
-
-def combined_field2(x, y):
-    r1 = make_circle_attraction_function(100, 100, 50, 300)(x, y)
-    r2 = make_circle_repulsion_function(-50, -50, 50, 150)(x, y)
-    return r1[0] + r2[0], r1[1] + r2[1]
-
 def make_tangential_function(cx, cy, cr, cs, d):
     """cx, cy define center, cr is radius, cs is outer radius, d is -1 for counterclockwise and 1 for clockwise"""
     def tangential_function(x, y):

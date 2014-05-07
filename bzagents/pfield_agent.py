@@ -70,6 +70,7 @@ class Agent(object):
         for enemy in self.enemies:
             if enemy.status == self.constants['tankalive']:
                 bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['shotrange'])))
+        #~ bag_o_fields.append(random_field)
         
         def pfield_function(x, y):
             dx = 0
