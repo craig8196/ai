@@ -103,7 +103,7 @@ def main():
     #bzrc = BZRC(host, int(port), debug=True)
     bzrc = BZRC(host, int(port))
 
-    tanks = self.bzrc.get_tanks()
+    tanks = bzrc.get_tanks()
     dumb_tanks = []
     for tank in tanks:
         t = DumbTank(bzrc, tank.index)
