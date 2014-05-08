@@ -99,7 +99,7 @@ class Agent(object):
                 data['forward_len'] = random.uniform(3, 8)
                 data['start_forward'] = time_diff
                 data['speed'] = 1
-                print self.min_angle_between(data['target_angle'], tank.angle)
+                #~ print self.min_angle_between(data['target_angle'], tank.angle)
         
         if time_diff - data['prev_shot'] > data['shot_len']:
             data['shoot'] = True

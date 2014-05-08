@@ -55,11 +55,14 @@ class Agent(object):
         self.shots = shots
         self.enemies = [tank for tank in othertanks if tank.color !=
                         self.constants['team']]
-
+        
         self.commands = []
-
+        
         for tank in mytanks:
-            self.behave(tank, time_diff)
+            if tank.index == 0:
+                self.behave(tank, time_diff, True)
+            else:
+                self.behave(tank, time_diff)
 
         results = self.bzrc.do_commands(self.commands)
 
@@ -78,10 +81,14 @@ class Agent(object):
         Plot the potential field if plot is True.
         """
         bag_o_fields = []
+        # avoid enemies
         for enemy in self.enemies:
             if enemy.status == self.constants['tankalive']:
-                bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['shotrange'])))
-        #~ bag_o_fields.append(random_field)
+                bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*5))
+        
+        # avoid shots
+        for shot in self.shots:
+            bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*3))
 
         enemy_flags = []
         for flag in self.flags:

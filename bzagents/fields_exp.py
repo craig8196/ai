@@ -76,13 +76,29 @@ OBSTACLES = [((0, 0), (-150, 0), (-150, -50), (0, -50)),
 
 # Vector math
 def length_squared(v1, v2):
+    """Return |v1-v2|^2."""
     return (v1[0] - v2[0])**2 + (v1[1] - v2[1])**2
 
-def distance(v1, v2):
+def calc_distance(v1, v2):
+    """Return distance between 2 tuples of length 2."""
     return math.sqrt(length_squared(v1, v2))
 
 def dot_product(v1, v2):
+    """Return dot product of 2 tuples length 2."""
     return v1[0]*v2[0] + v1[1]*v2[1]
+
+def calc_vector(x1, y1, x2, y2, max_distance, angle):
+    xdiff = x2 - x1
+    ydiff = y2 - y1
+    d = math.sqrt(xdiff**2 + ydiff**2)
+    if d > max_distance:
+        return 0, 0
+    else:
+        theta = math.atan2(ydiff, xdiff)
+        theta += angle*math.pi/180
+        dx = ((max_distance - d)/max_distance)*math.cos(theta)
+        dy = ((max_distance - d)/max_distance)*math.sin(theta)
+        return dx, dy
 
 def make_circle_attraction_function(cx, cy, cr, cs):
     """cx, cy define center, cr is radius, cs is outer radius.
@@ -91,13 +107,13 @@ def make_circle_attraction_function(cx, cy, cr, cs):
     def circle_attraction_field(x, y):
         xdiff = cx - x
         ydiff = cy - y
-        
         distance = math.sqrt(xdiff**2 + ydiff**2)
-        theta = math.atan2(ydiff, xdiff)
         
         if distance < cr:
             return 0, 0
-        elif distance > cs:
+        
+        theta = math.atan2(ydiff, xdiff)
+        if distance > cs:
             return math.cos(theta), math.sin(theta)
         else:
             max_dist = cs - cr
@@ -114,14 +130,14 @@ def make_circle_repulsion_function(cx, cy, cr, cs):
     def circle_repulsion_field(x, y):
         xdiff = cx - x
         ydiff = cy - y
-        
         distance = math.sqrt(xdiff**2 + ydiff**2)
-        theta = math.atan2(ydiff, xdiff)
         
+        if distance > cs:
+            return 0, 0
+            
+        theta = math.atan2(ydiff, xdiff)
         if distance < cr:
             return -math.cos(theta), -math.sin(theta)
-        elif distance > cs:
-            return 0, 0
         else:
             max_dist = cs - cr
             dist_to_edge = cs - distance
@@ -139,33 +155,40 @@ def make_tangential_function(cx, cy, cr, cs, d):
         xdiff = cx - x
         ydiff = cy - y
         distance = math.sqrt(xdiff**2 + ydiff**2)
-        theta = math.atan2(ydiff, xdiff)
-        theta += d*math.pi/2
+        
         if distance < cr or distance > cs:
             return 0, 0
         else:
+            theta = math.atan2(ydiff, xdiff)
+            theta += d*math.pi/2
             dx = math.cos(theta)
             dy = math.sin(theta)
             return dx, dy
     return tangential_function
 
 def random_field(x, y):
+    """Return random vector with magnitude between 0 and 1."""
     magnitude = random.uniform(0, 1)
     theta = random.uniform(0, 2*math.pi)
     return magnitude*math.cos(theta), magnitude*math.sin(theta)
 
-def make_line_function(x1, y1, x2, y2, parallel=1, distance=10):
+def make_line_function(x1, y1, x2, y2, max_distance=10, angle=180):
     """x1, y1 and x2, y2 are the start and end points of the line.
-    parallel determines how parallel to the line the tank is.
-    distance is the distance from the line the field is in effect.
     Return a function.
     """
     def line_field(x, y):
         len_sqrd = length_squared((x1, y1), (x2, y2))
-        # TODO finish this
         if len_sqrd == 0.0:
-            return 
-        return 0, 0
+            return calc_vector(x, y, x1, y1, max_distance, angle)
+        t = dot_product((x - x1, y - x1), (x2 - x1, y2 - y1)) / len_sqrd
+        if t < 0.0:
+            return calc_vector(x, y, x1, y1, max_distance, angle)
+        elif t > 1.0:
+            return calc_vector(x, y, x2, y2, max_distance, angle)
+        else:
+            newx = x1 + t*(x2 - x1)
+            newy = y1 + t*(y2 - y1)
+            return calc_vector(x, y, newx, newy, max_distance, angle)
     return line_field
 
 def combined_field1(x, y):
@@ -261,6 +284,7 @@ functions_to_plot = {
     'random_field.gpi': random_field,
     'counterclockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, -1),
     'clockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, 1),
+    'line_field.gpi': make_line_function(0, 0, 300, 300, 50, 0),
 }
 
 def create_gpi_files(functions, directory):
@@ -281,25 +305,25 @@ create_gpi_files(functions_to_plot, 'gnuplot_fields')
 ########################################################################
 # Animate a changing field, if the Python Gnuplot library is present
 
-try:
-    from Gnuplot import GnuplotProcess
-except ImportError:
-    print "Sorry.  You don't have the Gnuplot module installed."
-    import sys
-    sys.exit(-1)
-
-forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
-backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
-anim_points = forward_list + backward_list
- 
-gp = GnuplotProcess(persist=False)
-gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
-gp.write(draw_obstacles(OBSTACLES))
- 
-while True:
-    gp.write(plot_field(combined_field1()))
-for scale in cycle(anim_points):
-    field_function = generate_field_function(scale)
-    gp.write(plot_field(field_function))
+#~ try:
+    #~ from Gnuplot import GnuplotProcess
+#~ except ImportError:
+    #~ print "Sorry.  You don't have the Gnuplot module installed."
+    #~ import sys
+    #~ sys.exit(-1)
+#~ 
+#~ forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
+#~ backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
+#~ anim_points = forward_list + backward_list
+#~ 
+#~ gp = GnuplotProcess(persist=False)
+#~ gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
+#~ gp.write(draw_obstacles(OBSTACLES))
+#~ 
+#~ while True:
+    #~ gp.write(plot_field(basic_circle_attraction_field))
+#~ for scale in cycle(anim_points):
+    #~ field_function = generate_field_function(scale)
+    #~ gp.write(plot_field(field_function))
 
 # vim: et sw=4 sts=4
