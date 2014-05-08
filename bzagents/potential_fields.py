@@ -16,12 +16,11 @@ def compute_distance(cx, x, cy, y):
 def compute_angle(cx, x, cy, y):
     return math.atan2((cy - y), (cx - x))
 
-def make_circle_attraction_function(cx, cy, cr, cs):
+def make_circle_attraction_function(cx, cy, cr, cs, a):
     """cx, cy define center, cr is radius, cs is outer radius"""
     def circle_attraction_field(x, y):
         distance = compute_distance(cx, x, cy, y)
         theta = compute_angle(cx, x, cy, y)
-        a = 7
         if distance < cr:
             return 0, 0
         elif distance <= (cr + cs):
@@ -70,11 +69,12 @@ def make_tangential_function(cx, cy, cr, cs, d):
         distance = math.sqrt(xdiff**2 + ydiff**2)
         theta = math.atan2(ydiff, xdiff)
         theta += d*math.pi/2
+        a = 4
         if distance < cr or distance > cs:
             return 0, 0
         else:
-            dx = math.cos(theta)
-            dy = math.sin(theta)
+            dx = 4 * math.cos(theta)
+            dy = 4 * math.sin(theta)
             return dx, dy
     return tangential_function
 

@@ -63,12 +63,12 @@ class Agent(object):
 
         results = self.bzrc.do_commands(self.commands)
 
-    def closest_flag(self, flags, tank):
+    def closest_flag(self, flags, tank, flags_captured):
         closest_dist = sys.maxint
         chosen_flag = flags[0]
         for flag in flags:
             distance = compute_distance(flag.x, tank.x, flag.y, tank.y)
-            if distance < closest_dist:
+            if distance < closest_dist and not flags_captured.__contains__(flag.color):
                 closest_dist = distance
                 chosen_flag = flag 
         return chosen_flag
@@ -90,17 +90,38 @@ class Agent(object):
             else:
                 our_flag = flag
 
+        #if another tank on your team has a flag, that tank becomes a tangential field
+        #also, make sure that any flag that a teammate is carrying is no longer attractive
+        flags_captured = []
+        for my_tank in self.mytanks:
+            if my_tank != tank and my_tank.flag != "-":
+                bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, int(self.constants['tanklength']), 80, 1))
+                flags_captured.append(my_tank.flag)
+
+        #if an enemy tank has captured our flag, they become a priority
+        public_enemy = None
+        for other_tank in self.othertanks:
+            if other_tank.flag == self.constants['team']:
+                public_enemy = other_tank
+
         if tank.flag != "-":
             goal = self.base 
             cr = (self.base.corner1_x - self.base.corner2_x) / 2
             goal.x = self.base.corner1_x + cr
             goal.y = self.base.corner1_y + cr
             cs = 10
+            a = 7
+        elif public_enemy is not None:
+            goal = public_enemy
+            cr = int(self.constants['tanklength'])
+            cs = 10
+            a = 8
         else:
-            goal = self.closest_flag(enemy_flags, tank)
+            goal = self.closest_flag(enemy_flags, tank, flags_captured)
             cr = 2
             cs = 20
-        bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs))
+            a = 7
+        bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
 
         
         def pfield_function(x, y):
