@@ -103,11 +103,11 @@ def main():
     #bzrc = BZRC(host, int(port), debug=True)
     bzrc = BZRC(host, int(port))
 
-    tanks = bzrc.get_tanks()
+    tanks = bzrc.get_mytanks()
     dumb_tanks = []
     for tank in tanks:
         t = DumbTank(bzrc, tank.index)
-        dumb_tanks.append()
+        dumb_tanks.append(t)
 
     prev_time = time.time()
 

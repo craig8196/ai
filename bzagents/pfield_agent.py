@@ -93,9 +93,9 @@ class Agent(object):
         if tank.flag != "-":
             goal = self.base 
             cr = (self.base.corner1_x - self.base.corner2_x) / 2
-            goal.x = self.base.corner1_x
-            goal.y = self.base.corner1_y
-            cs = 5
+            goal.x = self.base.corner1_x + cr
+            goal.y = self.base.corner1_y + cr
+            cs = 10
         else:
             goal = self.closest_flag(enemy_flags, tank)
             cr = 2
