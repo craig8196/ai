@@ -36,10 +36,10 @@ def make_circle_attraction_function(cx, cy, cr, cs, a):
             dist_to_edge = distance - cr
             dx = (dist_to_edge/max_dist)*math.cos(theta)
             dy = (dist_to_edge/max_dist)*math.sin(theta)
-            return a*dx, a*dy
+            return a * dx, a * dy
     return circle_attraction_field
 
-def make_circle_repulsion_function(cx, cy, cr, cs):
+def make_circle_repulsion_function(cx, cy, cr, cs, a):
     """cx, cy define center, cr is radius, cs is outer radius"""
     def circle_repulsion_field(x, y):
         xdiff = cx - x
@@ -49,7 +49,7 @@ def make_circle_repulsion_function(cx, cy, cr, cs):
         theta = math.atan2(ydiff, xdiff)
         
         if distance < cr:
-            return -math.cos(theta), -math.sin(theta)
+            return a * -math.cos(theta), a * -math.sin(theta)
         elif distance > cs:
             return 0, 0
         else:
@@ -57,10 +57,10 @@ def make_circle_repulsion_function(cx, cy, cr, cs):
             dist_to_edge = cs - distance
             dx = -(dist_to_edge/max_dist)*math.cos(theta)
             dy = -(dist_to_edge/max_dist)*math.sin(theta)
-            return dx, dy
+            return a * dx, a * dy
     return circle_repulsion_field
 
-def make_tangential_function(cx, cy, cr, cs, d):
+def make_tangential_function(cx, cy, cr, cs, d, a):
     """cx, cy define center, cr is radius, cs is outer radius, d is -1 for counterclockwise and 1 for clockwise"""
     def tangential_function(x, y):
         xdiff = cx - x
@@ -74,7 +74,7 @@ def make_tangential_function(cx, cy, cr, cs, d):
         else:
             dx = 4 * math.cos(theta)
             dy = 4 * math.sin(theta)
-            return dx, dy
+            return a *dx, a * dy
     return tangential_function
 
 def random_field(x, y):

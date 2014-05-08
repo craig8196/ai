@@ -53,6 +53,7 @@ class Agent(object):
         self.othertanks = othertanks
         self.flags = flags
         self.shots = shots
+        self.obstacles = self.bzrc.get_obstacles()
         self.enemies = [tank for tank in othertanks if tank.color !=
                         self.constants['team']]
         
@@ -60,7 +61,7 @@ class Agent(object):
         
         for tank in mytanks:
             if tank.index == 0:
-                self.behave(tank, time_diff, True)
+                self.behave(tank, time_diff)
             else:
                 self.behave(tank, time_diff)
 
@@ -76,6 +77,26 @@ class Agent(object):
                 chosen_flag = flag 
         return chosen_flag
     
+    # def get_obstacle_center_and_radius(self, obstacle):
+    #     x_total = 0
+    #     y_total = 0
+    #     for index, value in obstacle:
+    #         if index % 2 == 0:
+    #             x_total += value
+    #         else:
+    #             y_total += value
+    #     x_average = x_total / len(obstacle) / 2
+    #     y_average = y_total / len(obstacle) / 2
+    #     current_x = None
+    #     total_distance_from_center = 0
+    #     for index, value in obstacle:
+    #         if index % 2 == 0:
+    #             current_x = value
+    #         else:
+    #             total_distance_from_center += compute_distance(current_x, x_average, value, y_average)
+    #     average_radius = total_distance_from_center / len(obstacle) / 2
+    #     return x_average, y_average, average_radius
+
     def behave(self, tank, time_diff, plot=False):
         """Create a behavior command based on potential fields.
         Plot the potential field if plot is True.
@@ -84,11 +105,21 @@ class Agent(object):
         # avoid enemies
         for enemy in self.enemies:
             if enemy.status == self.constants['tankalive']:
-                bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*5))
+                bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*5, 2))
+
+        #avoid obstacles
+        for obstacle in self.obstacles:
+            # x, y, r = self.get_obstacle_center_and_radius(obstacle)
+            current_x = None
+            for index, value in obstacle:
+                if index % 2 == 0:
+                    current_x = value
+                else:
+                    bag_o_fields.append(make_circle_repulsion_function(current_x, value, 10, 20, 20))
         
         # avoid shots
         for shot in self.shots:
-            bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*3))
+            bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*3, 2))
 
         enemy_flags = []
         for flag in self.flags:
@@ -102,7 +133,7 @@ class Agent(object):
         flags_captured = []
         for my_tank in self.mytanks:
             if my_tank != tank and my_tank.flag != "-":
-                bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, int(self.constants['tanklength']), 80, 1))
+                bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, int(self.constants['tanklength']), 80, 1, 20))
                 flags_captured.append(my_tank.flag)
 
         #if an enemy tank has captured our flag, they become a priority
@@ -117,12 +148,22 @@ class Agent(object):
             goal.x = self.base.corner1_x + cr
             goal.y = self.base.corner1_y + cr
             cs = 10
-            a = 2
-        elif public_enemy is not None:
-            goal = public_enemy
-            cr = int(self.constants['tanklength'])
-            cs = 20
             a = 3
+        elif public_enemy is not None:
+            goal1 = public_enemy
+            goal2 = self.closest_flag(enemy_flags, tank, flags_captured)
+            dist_goal1 = compute_distance(goal1.x, tank.x, goal1.y, tank.y)
+            dist_goal2 = compute_distance(goal2.x, tank.x, goal2.y, tank.y)
+            if dist_goal1 < dist_goal2:
+                goal = goal1 
+                cr = int(self.constants['tanklength'])
+                cs = 20
+                a = 3
+            else:
+                goal = goal2
+                cr = 2
+                cs = 20
+                a = 2
         else:
             goal = self.closest_flag(enemy_flags, tank, flags_captured)
             cr = 2
