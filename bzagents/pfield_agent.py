@@ -116,6 +116,7 @@ class Agent(object):
                     #~ current_x = value
                 #~ else:
                     #~ bag_o_fields.append(make_circle_repulsion_function(current_x, value, 10, 20, 20))
+
         
         # avoid shots
         for shot in self.shots:
