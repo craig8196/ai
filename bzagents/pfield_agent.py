@@ -60,7 +60,7 @@ class Agent(object):
         
         for tank in mytanks:
             if tank.index == 0:
-                self.behave(tank, time_diff, True)
+                self.behave(tank, time_diff)
             else:
                 self.behave(tank, time_diff)
 
@@ -117,17 +117,17 @@ class Agent(object):
             goal.x = self.base.corner1_x + cr
             goal.y = self.base.corner1_y + cr
             cs = 10
-            a = 7
+            a = 1.5
         elif public_enemy is not None:
             goal = public_enemy
             cr = int(self.constants['tanklength'])
             cs = 10
-            a = 8
+            a = 1.5
         else:
             goal = self.closest_flag(enemy_flags, tank, flags_captured)
             cr = 2
             cs = 20
-            a = 7
+            a = 1.5
         bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
 
         
