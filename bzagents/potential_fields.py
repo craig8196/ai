@@ -21,17 +21,16 @@ def make_circle_attraction_function(cx, cy, cr, cs, a):
     def circle_attraction_field(x, y):
         distance = compute_distance(cx, x, cy, y)
         theta = compute_angle(cx, x, cy, y)
-        # if distance < cr:
-        #     return 0, 0
-        # elif distance <= (cr + cs):
-        #     return [a * (distance - cr) * math.cos(theta), a * (distance - cr) * math.sin(theta)] 
-        # else:
-        #     return [a * cs * math.cos(theta), a * cs * math.sin(theta)] 
-
+        #~ if distance < cr:
+            #~ return 0, 0
+        #~ elif distance <= (cr + cs):
+            #~ return [a * (distance - cr) * math.cos(theta), a * (distance - cr) * math.sin(theta)] 
+        #~ else:
+            #~ return [a * cs * math.cos(theta), a * cs * math.sin(theta)] 
         if distance < cr:
             return 0, 0
         elif distance > cs:
-            return math.cos(theta), math.sin(theta)
+            return a*math.cos(theta), a*math.sin(theta)
         else:
             max_dist = cs - cr
             dist_to_edge = distance - cr
