@@ -103,8 +103,11 @@ def main():
     #bzrc = BZRC(host, int(port), debug=True)
     bzrc = BZRC(host, int(port))
 
-    tank0 = DumbTank(bzrc, 0)
-    tank1 = DumbTank(bzrc, 1)
+    tanks = self.bzrc.get_tanks()
+    dumb_tanks = []
+    for tank in tanks:
+        t = DumbTank(bzrc, tank.index)
+        dumb_tanks.append()
 
     prev_time = time.time()
 
@@ -113,8 +116,8 @@ def main():
         while True:
             time_diff = time.time() - prev_time
             prev_time = time.time()
-            tank0.tick(time_diff)
-            tank1.tick(time_diff)
+            for dumb in dumb_tanks:
+                dumb.tick(time_diff)
     except KeyboardInterrupt:
         print "Exiting due to keyboard interrupt."
         bzrc.close()
