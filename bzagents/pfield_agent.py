@@ -59,7 +59,10 @@ class Agent(object):
         self.commands = []
 
         for tank in mytanks:
-            self.behave(tank, time_diff)
+            if tank.index == 0:
+                self.behave(tank, time_diff, True)
+            else:
+                self.behave(tank, time_diff)
 
         results = self.bzrc.do_commands(self.commands)
 
