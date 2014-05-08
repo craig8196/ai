@@ -10,25 +10,35 @@ import os
 
 from numpy import linspace
 
+def compute_distance(cx, x, cy, y):
+    return math.sqrt((cx - x)**2 + (cy - y)**2)
+
+def compute_angle(cx, x, cy, y):
+    return math.atan2((cy - y), (cx - x))
+
 def make_circle_attraction_function(cx, cy, cr, cs):
     """cx, cy define center, cr is radius, cs is outer radius"""
     def circle_attraction_field(x, y):
-        xdiff = cx - x
-        ydiff = cy - y
-        
-        distance = math.sqrt(xdiff**2 + ydiff**2)
-        theta = math.atan2(ydiff, xdiff)
-        
+        distance = compute_distance(cx, x, cy, y)
+        theta = compute_angle(cx, x, cy, y)
+        a = 7
         if distance < cr:
             return 0, 0
-        elif distance > cs:
-            return math.cos(theta), math.sin(theta)
+        elif distance <= (cr + cs):
+            return [a * (distance - cr) * math.cos(theta), a * (distance - cr) * math.sin(theta)] 
         else:
-            max_dist = cs - cr
-            dist_to_edge = distance - cr
-            dx = (dist_to_edge/max_dist)*math.cos(theta)
-            dy = (dist_to_edge/max_dist)*math.sin(theta)
-            return dx, dy
+            return [a * cs * math.cos(theta), a * cs * math.sin(theta)] 
+
+        # if distance < cr:
+        #     return 0, 0
+        # elif distance > cs:
+        #     return math.cos(theta), math.sin(theta)
+        # else:
+        #     max_dist = cs - cr
+        #     dist_to_edge = distance - cr
+        #     dx = (dist_to_edge/max_dist)*math.cos(theta)
+        #     dy = (dist_to_edge/max_dist)*math.sin(theta)
+        #     return dx, dy
     return circle_attraction_field
 
 def make_circle_repulsion_function(cx, cy, cr, cs):

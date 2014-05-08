@@ -264,6 +264,7 @@ class BZRC:
                 tank.color = line[2]
                 tank.status = line[3]
                 tank.flag = line[4]
+                print tank.flag
                 tank.x = float(line[5])
                 tank.y = float(line[6])
                 tank.angle = float(line[7])

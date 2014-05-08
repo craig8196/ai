@@ -76,7 +76,7 @@ OBSTACLES = [((0, 0), (-150, 0), (-150, -50), (0, -50)),
 
 # Vector math
 def length_squared(v1, v2):
-    return (v1[0] - v2[0])**2 + (v1[1] = v2[1])**2
+    return (v1[0] - v2[0])**2 + (v1[1] - v2[1])**2
 
 def distance(v1, v2):
     return math.sqrt(length_squared(v1, v2))
@@ -288,18 +288,18 @@ except ImportError:
     import sys
     sys.exit(-1)
 
-#~ forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
-#~ backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
-#~ anim_points = forward_list + backward_list
-#~ 
-#~ gp = GnuplotProcess(persist=False)
-#~ gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
-#~ gp.write(draw_obstacles(OBSTACLES))
-#~ 
-#~ while True:
-    #~ gp.write(plot_field(basic_circle_attraction_field))
-#~ for scale in cycle(anim_points):
-    #~ field_function = generate_field_function(scale)
-    #~ gp.write(plot_field(field_function))
+forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
+backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
+anim_points = forward_list + backward_list
+ 
+gp = GnuplotProcess(persist=False)
+gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
+gp.write(draw_obstacles(OBSTACLES))
+ 
+while True:
+    gp.write(plot_field(combined_field1()))
+for scale in cycle(anim_points):
+    field_function = generate_field_function(scale)
+    gp.write(plot_field(field_function))
 
 # vim: et sw=4 sts=4

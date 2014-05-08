@@ -36,6 +36,10 @@ class Agent(object):
         self.constants = self.bzrc.get_constants()
         self.commands = []
         self.tanks = {}
+        self.bases = bzrc.get_bases()
+        for base in self.bases:
+            if base.color == self.constants['team']:
+                self.base = base
         
         self.WORLDSIZE = int(self.constants['worldsize'])
         
@@ -55,12 +59,19 @@ class Agent(object):
         self.commands = []
 
         for tank in mytanks:
-            if tank.index == 0:
-                self.behave(tank, time_diff, True)
-            else:
-                self.attack_enemies(tank)
+            self.behave(tank, time_diff)
 
         results = self.bzrc.do_commands(self.commands)
+
+    def closest_flag(self, flags, tank):
+        closest_dist = sys.maxint
+        chosen_flag = flags[0]
+        for flag in flags:
+            distance = compute_distance(flag.x, tank.x, flag.y, tank.y)
+            if distance < closest_dist:
+                closest_dist = distance
+                chosen_flag = flag 
+        return chosen_flag
     
     def behave(self, tank, time_diff, plot=False):
         """Create a behavior command based on potential fields.
@@ -71,6 +82,26 @@ class Agent(object):
             if enemy.status == self.constants['tankalive']:
                 bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['shotrange'])))
         #~ bag_o_fields.append(random_field)
+
+        enemy_flags = []
+        for flag in self.flags:
+            if flag.color != self.constants['team']:
+                enemy_flags.append(flag)
+            else:
+                our_flag = flag
+
+        if tank.flag != "-":
+            goal = self.base 
+            cr = (self.base.corner1_x - self.base.corner2_x) / 2
+            goal.x = self.base.corner1_x
+            goal.y = self.base.corner1_y
+            cs = 5
+        else:
+            goal = self.closest_flag(enemy_flags, tank)
+            cr = 2
+            cs = 20
+        bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs))
+
         
         def pfield_function(x, y):
             dx = 0
