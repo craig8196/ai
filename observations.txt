@@ -1,0 +1,19 @@
+
+
+5.  Observations against two dumb bots:
+    Nothing interesting of note, it was just like fighting our own dumb bots.
+    
+6.  Observations against enemy smart bots one the four L's map:
+    At first we were losing, then we started coming back as their bots got stuck on obstacles.
+    Shoot themselves a lot.
+    Trapped by objects/don't go around.
+    Sinusoidal pattern instead of going straight to the goal (which is good for dodging)
+    Don't shoot at enemies, on a timer.
+    Sometimes circle the target region.
+    Repulsive fields aren't very strong.
+    May be repulsed by own shots, which may be causing the sinusoidal pattern above.
+    They sometimes crash into the wall of the map, not a huge issue, but annoying.
+    Our robots are useless when chasing down our captured flag because we shoot all other bots in persuit.
+    Our robots get distracted from capturing flags when
+    
+    
