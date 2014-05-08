@@ -108,14 +108,14 @@ class Agent(object):
                 bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*5, 2))
 
         #avoid obstacles
-        for obstacle in self.obstacles:
-            # x, y, r = self.get_obstacle_center_and_radius(obstacle)
-            current_x = None
-            for index, value in obstacle:
-                if index % 2 == 0:
-                    current_x = value
-                else:
-                    bag_o_fields.append(make_circle_repulsion_function(current_x, value, 10, 20, 20))
+        #~ for obstacle in self.obstacles:
+            #~ # x, y, r = self.get_obstacle_center_and_radius(obstacle)
+            #~ current_x = None
+            #~ for index, value in obstacle:
+                #~ if index % 2 == 0:
+                    #~ current_x = value
+                #~ else:
+                    #~ bag_o_fields.append(make_circle_repulsion_function(current_x, value, 10, 20, 20))
         
         # avoid shots
         for shot in self.shots:

@@ -1,5 +1,8 @@
 
 
+
+Names of opponents: Trevor Dixon and Brian Smith
+
 5.  Observations against two dumb bots:
     Nothing interesting of note, it was just like fighting our own dumb bots.
     
@@ -14,6 +17,10 @@
     May be repulsed by own shots, which may be causing the sinusoidal pattern above.
     They sometimes crash into the wall of the map, not a huge issue, but annoying.
     Our robots are useless when chasing down our captured flag because we shoot all other bots in persuit.
-    Our robots get distracted from capturing flags when
+    Our robots get distracted from capturing flags when our own flag is captured.
+    The sinusoidal pattern was due to our visualization, which slowed down the frequency of updating.  This wasn't an issue on the second match.
     
+    On the four boxes map:
+    We tried to fight two of our agents against two of theirs.
+    Our opponents attraction fields put their attraction fields on all flags. We saw that this caused them to crash into the center obstacles.
     

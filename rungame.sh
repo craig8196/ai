@@ -4,5 +4,3 @@ python bzagents/agent0.py localhost 50100 &
 python bzagents/agent0.py localhost 50101 &
 python bzagents/agent0.py localhost 50102 &
 python bzagents/pfield_agent.py localhost 50103 &
-
-
