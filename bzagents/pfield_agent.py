@@ -102,7 +102,7 @@ class Agent(object):
         flags_captured = []
         for my_tank in self.mytanks:
             if my_tank != tank and my_tank.flag != "-":
-                bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, int(self.constants['tanklength']), 80, 1))
+                bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, int(self.constants['tanklength']), 80, 1, 4))
                 flags_captured.append(my_tank.flag)
 
         #if an enemy tank has captured our flag, they become a priority
