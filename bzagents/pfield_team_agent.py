@@ -23,10 +23,63 @@
 import sys
 import math
 import time
-from Gnuplot import GnuplotProcess
-
+from threading import Thread
 from bzrc import BZRC, Command
 from potential_fields import *
+from utilities import ThreadSafeQueue
+from graph import PotentialFieldGraph
+
+
+
+class BZRemoteController(object):
+    """Allows for easy interacting with the BZFlag Server."""
+    pass
+
+class EnvironmentState(object):
+    """Tracks the state of an environment and provides convenience 
+    functions that answer common questions about the state.
+    """
+    pass
+
+class TeamManager(object):
+    """Handle all command and control logic for a team of tanks."""
+    #~ create tanks and give them brains
+    #~ periodically check game state and pass new vars to each tank
+    #~ threads would follow producer consumer problems and thus need semaphores (or annoying locks and ints and checks)
+    #~ each tank is its own thread and acts accordingly
+    #~ graphing of a tank would be on a separate thread, a tank to be graphed would be notified via a
+    #~ how would I adjust alphas?
+    
+
+class Tank(threading.Thread):
+    """Handle all command and control logic for a single tank."""
+    
+    def __init__(self, agent):
+        """The brain must take in a state and produce a command."""
+        super(Tank, self).__init__()
+        self.agent = agent
+        self.error = 0
+        self.env_states = ThreadSafeQueue()
+        self.keep_running = True
+    
+    def add_env_state(self, env_state):
+        self.env_states.add(env_state)
+    
+    def remove_env_state(self):
+        return self.env_states.first()
+    
+    def run(self):
+        while self.keep_running:
+            s = self.remove_env_state()
+            self.agent.behave(self, s)
+
+class PotentialFieldAgent(object):
+    """Determine behavior based on potential fields."""
+    pass
+
+
+
+
 
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
@@ -41,16 +94,8 @@ class Agent(object):
             if base.color == self.constants['team']:
                 self.base = base
         
-        self.WORLDSIZE = int(self.constants['worldsize'])
-        
-        self.gp = GnuplotProcess(persist=False)
-        self.gp.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
-        #~ self.gpa = GnuplotProcess(persist=False)
-        #~ self.gpa.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
-        #~ self.gpr = GnuplotProcess(persist=False)
-        #~ self.gpr.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
-        self.gpt = GnuplotProcess(persist=False)
-        self.gpt.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
+        self.graph = PotentialFieldGraph(int(self.constants['worldsize']))
+        self.graph.start()
 
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
@@ -191,9 +236,6 @@ class Agent(object):
             cr = 2
             cs = 20
             a = 2
-        #~ temp_circ = make_circle_attraction_function(goal.x, goal.y, cr, cs, a)
-        #~ if plot:
-            #~ self.gpa.write(plot_field(temp_circ))
         bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
 
         
@@ -210,7 +252,7 @@ class Agent(object):
         self.move_to_position(tank, tank.x + dx, tank.y + dy)
         
         if plot:
-            self.gp.write(plot_field(pfield_function))
+            self.graph.add_function(pfield_function)
     
     def attack_enemies(self, tank):
         """Find the closest enemy and chase it, shooting as you go."""
