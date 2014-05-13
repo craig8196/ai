@@ -28,6 +28,46 @@ from Gnuplot import GnuplotProcess
 from bzrc import BZRC, Command
 from potential_fields import *
 
+class Cell(object):
+
+    #about one-seventh of the grid
+    unconditional_probability = 0.143
+    threshold = 0.9 
+
+    def __init__(self, i, j):
+        self.i = i
+        self.j = j
+        self.is_occupied = False
+
+    def update_conditional_prob(self, prob):
+        self.conditional_probability = prob
+        if self.conditional_probability >= threshold:
+            self.is_occcupied = True
+
+    @classmethod
+    def update_unconditional_prob(cls, prob):
+        cls.unconditional_probability = prob
+
+    @classmethod
+    def get_unconditional_prob(cls, hits, misses):
+        part_sum = 0
+        if hits / misses <= 0.10:
+            part_sum = (hits / misses) - 0.15
+        elif hits / misses >= 0.40:
+            part_sum = (hits / misses) - 0.20
+        return cls.unconditional_probability + part_sum
+
+class Grid(object):
+
+    def __init__(self):
+        rows = []
+        for i in range(self.grid_i):
+            columns = []
+            for j in range(self.grid_j):
+                columns.append(new Cell(i, j))
+            rows.append(columns)
+
+
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
 
