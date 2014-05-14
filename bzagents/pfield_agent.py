@@ -31,6 +31,7 @@ from potential_fields import *
 class Cell(object):
 
     #about one-seventh of the grid
+    #this is p(si,j = occupied), and it will be updated over time
     unconditional_probability = 0.143
     threshold = 0.7 
 
@@ -39,14 +40,11 @@ class Cell(object):
         self.j = j
         self.is_occupied = False
 
+    #this is p(si,j = occupied | oij)
     def update_conditional_prob(self, prob):
         self.conditional_probability = prob
         if self.conditional_probability >= threshold:
-            self.is_occcupied = True
-
-    @classmethod
-    def update_unconditional_prob(cls, prob):
-        cls.unconditional_probability = prob
+            self.is_occupied = True
 
     @classmethod
     def get_unconditional_prob(cls, hits, total):
@@ -59,7 +57,7 @@ class Cell(object):
 
 class Grid(object):
 
-    def __init__(self):
+    def __init__(self, probability_true_positive):
         rows = []
         for i in range(self.grid_i):
             columns = []
@@ -69,26 +67,58 @@ class Grid(object):
 
         self.total_hits = 0
         self.total_read = 0
+        self.prob_true_positive
+        self.prob_true_negative
 
-    def update_(self, hits, total):
-        self.total_hits += hits
-        self.total_read += total
+    def update_probability(self):
         return self.total_hits / self.total_read
 
-    def get_unconditional_probability(self):
-        return self.total_hits / self.total_read 
+    #returns p(si,j = occupied | oij) the main conditional probability that we want
+    def calculate_conditional_probability(self, conditional_observation, state, observation):
+        return conditional_observation * state / observation
 
+    #returns p(oi,j)
+    def calculate_observational_probability(self, is_occupied):
+        if is_occupied:
+            #this is p(oi,j = occupied | si,j = not occupied)
+            probability_given_not_occupied = (1 - self.prob_true_positive) * (1 - Cell.unconditional_probability)
+
+            #this is p(oi,j = occupied | si,j = occupied)
+            probability_given_occupied = self.prob_true_positive * Cell.unconditional_probability
+        else:
+            #this is p(oi,j = not occupied | si,j = not occupied)
+            probability_given_not_occupied = self.prob_true_negative * (1 - Cell.unconditional_probability)
+
+            #this is p(oi,j = not occupied | si,j = occupied)
+            probability_given_occupied = (1 - self.prob_true_positive) * Cell.unconditional_probability
+
+        return probability_given_not_occupied + probability_given_occupied
+
+    #returns p(oi,j | si,j = occupied)
+    def determine_conditional_observation(self, is_occupied):
+        if is_occupied:
+            return self.prob_true_positive
+        else:
+            return 1 - self.prob_true_negative
+
+    #to be called in the tick method.
     def update(self, start_i, start_j, mini_grid):
         main_i = start_i
         main_j = start_j
-        hits = 0
-        total = 0
         
         for i in mini_grid:
-            for j in mini_grid[i]:
-                cell = row[main_i][main_j]
+            for occupancy in mini_grid[i]:
+                conditional_probability = calculate_conditional_probability(determine_conditional_observation(occupancy), Cell.unconditional_probability, calculate_observational_probability(occupancy))
+                row[main_i][main_j].update_conditional_prob(conditional_probability)
+                if (row[main_i][main_j].is_occupied):
+                    #plot it
+                self.total_hits += occupancy
+                self.total_read += 1
                 main_j += 1
             main_i += 1
+
+        #update unconditional probability for all cells = p(si,j = occupied)
+        Cell.unconditional_probability = (update_probability() + Cell.unconditional_probability) / 2
 
 
 class Agent(object):
