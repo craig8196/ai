@@ -32,7 +32,7 @@ class Cell(object):
 
     #about one-seventh of the grid
     unconditional_probability = 0.143
-    threshold = 0.9 
+    threshold = 0.7 
 
     def __init__(self, i, j):
         self.i = i
@@ -49,12 +49,12 @@ class Cell(object):
         cls.unconditional_probability = prob
 
     @classmethod
-    def get_unconditional_prob(cls, hits, misses):
+    def get_unconditional_prob(cls, hits, total):
         part_sum = 0
-        if hits / misses <= 0.10:
-            part_sum = (hits / misses) - 0.15
+        if hits / total <= 0.10:
+            part_sum = (hits / total) - 0.15
         elif hits / misses >= 0.40:
-            part_sum = (hits / misses) - 0.20
+            part_sum = (hits / total) - 0.20
         return cls.unconditional_probability + part_sum
 
 class Grid(object):
@@ -66,6 +66,29 @@ class Grid(object):
             for j in range(self.grid_j):
                 columns.append(new Cell(i, j))
             rows.append(columns)
+
+        self.total_hits = 0
+        self.total_read = 0
+
+    def update_(self, hits, total):
+        self.total_hits += hits
+        self.total_read += total
+        return self.total_hits / self.total_read
+
+    def get_unconditional_probability(self):
+        return self.total_hits / self.total_read 
+
+    def update(self, start_i, start_j, mini_grid):
+        main_i = start_i
+        main_j = start_j
+        hits = 0
+        total = 0
+        
+        for i in mini_grid:
+            for j in mini_grid[i]:
+                cell = row[main_i][main_j]
+                main_j += 1
+            main_i += 1
 
 
 class Agent(object):
