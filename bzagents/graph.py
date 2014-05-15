@@ -32,7 +32,7 @@ class PotentialFieldGraph(Thread):
         This is the consumer.
         Return a function of the type f(x, y).
         """
-        return self.functions.first()
+        return self.functions.remove()
     
     def run(self):
         """Continuously graph functions."""

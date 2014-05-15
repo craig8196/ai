@@ -43,13 +43,26 @@ class EnvironmentConstants(object):
     
     def set_constants(self, constants):
         self.constants = constants
-        self.worldsize = constants['worldsize']
+        self.worldsize = int(constants['worldsize'])
         self.alive = constants['tankalive']
         self.dead = constants['tankdead']
         self.color = constants['team']
         self.tanklength = constants['tanklength']
+        if 'truepositive' in constants:
+            self.truepositive = float(constants['truepositive'])
+        else:
+            self.truepositive = None
+        if 'truenegative' in constants:
+            self.truenegative = float(constants['truenegative'])
+        else:
+            self.truenegative = None
+        if self.truepositive != None and self.truenegative != None:
+            self.occgrid_enabled = True
+        else:
+            self.occgrid_enabled = False
     
     def get_count(self, teamcolor):
+        """Return number of tanks on given team."""
         for base in self.bases:
             if base.color == teamcolor:
                 return base.count

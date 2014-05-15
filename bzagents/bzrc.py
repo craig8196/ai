@@ -357,9 +357,12 @@ class BZRC:
 
     def get_occgrid(self, tankid):
         """Request an occupancy grid for a tank"""
+        self.lock.acquire()
         self.sendline('occgrid %d' % tankid)
         self.read_ack()
-        return self.read_occgrid()
+        result = self.read_occgrid()
+        self.lock.release()
+        return result
 
     def get_flags(self):
         """Request a list of flags."""
@@ -453,19 +456,22 @@ class BZRC:
     def get_environment_constants(self):
         self.lock.acquire()
         con = EnvironmentConstants()
-        self.sendline('obstacles')
+        
+        self.sendline('constants')
+        self.read_ack()
+        con.set_constants(self.read_constants())
+        if con.truenegative == None and con.truepositive == None:
+            self.sendline('obstacles')
         self.sendline('bases')
         self.sendline('teams')
-        self.sendline('constants')
         
-        self.read_ack()
-        con.obstacles = self.read_obstacles()
+        if con.truenegative == None and con.truepositive == None:
+            self.read_ack()
+            con.obstacles = self.read_obstacles()
         self.read_ack()
         con.bases = self.read_bases()
         self.read_ack()
         con.teams = self.read_teams()
-        self.read_ack()
-        con.set_constants(self.read_constants())
         self.lock.release()
         return con
     

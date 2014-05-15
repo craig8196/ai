@@ -12,6 +12,7 @@ from potential_fields import *
 from utilities import ThreadSafeQueue
 from graph import PotentialFieldGraph
 from env import EnvironmentState
+from bzui import BZUI
 
 
 class TeamManager(object):
@@ -28,8 +29,16 @@ class TeamManager(object):
     
     def play(self):
         """Start playing BZFlag!"""
+        try:
+            import _tkinter
+            import Tkinter
+            ui = BZUI(self.tanks)
+            ui.setDaemon(True)
+            ui.start()
+        except ImportError:
+            print "You need Tkinter to be installed to use the graphical interface."
+        
         prev_time = time.time()
-
         # Continuously get the environment state and have each tank update
         try:
             while True:
@@ -37,7 +46,8 @@ class TeamManager(object):
                 self.tick(time_diff)
         except KeyboardInterrupt:
             print "Exiting due to keyboard interrupt."
-            bzrc.close()
+            self.bzrc.close()
+            exit(0)
     
     def tick(self, time_diff):
         """Get a new state."""
@@ -62,13 +72,18 @@ class PFieldTank(Thread):
     
     def start_plotting(self):
         if not self.graph:
-            self.graph = PotentialFieldGraph(self.env_constants.get_worldsize())
+            self.graph = PotentialFieldGraph(self.env_constants.worldsize)
             self.graph.setDaemon(True)
             self.graph.start()
     
     def stop_plotting(self):
         if self.graph:
             self.graph.stop()
+    
+    def is_plotting(self):
+        if self.graph:
+            return True
+        return False
             
     def stop(self):
         self.keep_running = False
@@ -85,7 +100,8 @@ class PFieldTank(Thread):
     def run(self):
         while self.keep_running:
             s = self.remove_env_state()
-            self.behave(s)
+            if self.keep_running:
+                self.behave(s)
 
     def closest_flag(self, flags, tank, flags_captured):
         closest_dist = sys.maxint
@@ -171,6 +187,8 @@ class PFieldTank(Thread):
         
         dx, dy = pfield_function(tank.x, tank.y)
         self.move_to_position(tank, tank.x + dx, tank.y + dy)
+        if self.graph:
+            self.graph.add_function(pfield_function)
     
     def attack_enemies(self, tank):
         """Find the closest enemy and chase it, shooting as you go."""
