@@ -38,7 +38,8 @@ class PotentialFieldGraph(Thread):
         """Continuously graph functions."""
         while self.keep_running:
             f = self.remove_function()
-            self.gp.write(self.plot_field(f))
+            if self.keep_running:
+                self.gp.write(self.plot_field(f))
     
     # Helper functions.
     def gpi_point(self, x, y, vec_x, vec_y):
@@ -62,7 +63,7 @@ class PotentialFieldGraph(Thread):
         # Make sure the figure is square since the world is square:
         s += 'set size square\n'
         # Add a pretty title (optional):
-        #s += "set title 'Potential Fields'\n"
+        s += "set title 'Potential Fields'\n"
         return s
     
     def draw_line(self, p1, p2):
@@ -81,7 +82,7 @@ class PotentialFieldGraph(Thread):
             for cur_point in obs[1:]:
                 s += self.draw_line(last_point, cur_point)
                 last_point = cur_point
-            s += draw_line(last_point, obs[0])
+            s += self.draw_line(last_point, obs[0])
         return s
     
     def plot_field(self, function):
@@ -97,7 +98,7 @@ class PotentialFieldGraph(Thread):
 
         for x, y in points:
             f_x, f_y = function(x, y)
-            plotvalues = gpi_point(x, y, f_x, f_y)
+            plotvalues = self.gpi_point(x, y, f_x, f_y)
             if plotvalues is not None:
                 x1, y1, x2, y2 = plotvalues
                 s += '%s %s %s %s\n' % (x1, y1, x2, y2)
