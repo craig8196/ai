@@ -1,4 +1,4 @@
-
+from grid import Grid
 
 class EnvironmentState(object):
     """Tracks the state of an environment and provides convenience 
@@ -40,6 +40,7 @@ class EnvironmentConstants(object):
         # 'linearaccel': '0.5', 'team': 'blue', 'tankradius': '4.32', 'angularaccel': '0.5', 
         # 'tankwidth': '2.8', 'tanklength': '6'}
         self.constants = None
+        self.obstacle_functions = []
     
     def set_constants(self, constants):
         self.constants = constants
@@ -58,8 +59,10 @@ class EnvironmentConstants(object):
             self.truenegative = None
         if self.truepositive != None and self.truenegative != None:
             self.occgrid_enabled = True
+            self.grid = Grid(self.worldsize, self.worldsize)
         else:
             self.occgrid_enabled = False
+            self.grid = None
     
     def get_count(self, teamcolor):
         """Return number of tanks on given team."""
@@ -67,3 +70,6 @@ class EnvironmentConstants(object):
             if base.color == teamcolor:
                 return base.count
         return 0
+    
+    def get_obstacle_functions(self):
+        return self.obstacle_functions

@@ -6,6 +6,7 @@
 import sys
 import math
 import time
+import random
 from threading import Thread
 from bzrc import BZRC, Command
 from potential_fields import *
@@ -63,13 +64,16 @@ class PFieldTank(Thread):
     def __init__(self, index, bzrc, env_constants):
         """The brain must take in a state and produce a command."""
         super(PFieldTank, self).__init__()
-        self.index = index
+        self.index = index # same as tank id
         self.bzrc = bzrc
         self.error = 0
         self.env_states = ThreadSafeQueue()
         self.env_constants = env_constants
         self.keep_running = True
         self.graph = None
+        self.last_sensor_poll = -1.0
+        self.exploration_goal = (0, 0)
+        self.past_places = {}
     
     def start_plotting(self):
         if not self.graph:
@@ -103,7 +107,7 @@ class PFieldTank(Thread):
             s = self.remove_env_state()
             if self.keep_running:
                 self.behave(s)
-
+    
     def closest_flag(self, flags, tank, flags_captured):
         closest_dist = sys.maxint
         chosen_flag = flags[0]
@@ -113,68 +117,90 @@ class PFieldTank(Thread):
                 closest_dist = distance
                 chosen_flag = flag 
         return chosen_flag
-
+    
+    #~ def update_places(self, mytank, time_diff):
+        #~ if len(self.past_places) > 20:
+            #~ self.past_places.pop(0)
+            #~ self.past_places_functions
+    
     def behave(self, env_state):
         """Create a behavior command based on potential fields given an environment state."""
-        env_constants = self.env_constants
-        tank = env_state.get_mytank(self.index)
-        
+        env_constants = self.env_constants # shorten the name
         bag_o_fields = []
+        bag_o_fields.extend(env_constants.get_obstacle_functions())
+        mytank = env_state.get_mytank(self.index)
+        
+        # get sensor update every second
+        if env_state.time_diff - self.last_sensor_poll > 1.0:
+            self.last_sensor_poll = env_state.time_diff
+            x, y, grid = self.bzrc.get_grid_as_matrix(self.index)
+            env_constants.grid.update(x, y, grid)
+        
+        
+        
+        #~ x, y = self.exploration_goal
+        #~ prob = env_constants.grid.get_item(x, y)
+        #~ lb = env_constants.grid.not_obstacle_threshold
+        #~ ub = env_constants.grid.obstacle_threshold
+        #~ if prob < lb or prob > ub:
+            #~ x = random.randint(0, env_constants.worldsize-1)
+            #~ y = random.randint(0, env_constants.worldsize-1)
+        #~ bag_o_fields.append(make_circle_attraction_function(x - env_constants.worldsize/2, y - env_constants.worldsize/2, 1, 100, 2))
         # avoid enemies
-        for enemy in env_state.enemytanks:
-            if enemy.status == self.env_constants.alive:
-                bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, env_constants.tanklength, env_constants.tanklength*5, 2))
+        #~ for enemy in env_state.enemytanks:
+            #~ if enemy.status == self.env_constants.alive:
+                #~ bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, env_constants.tanklength, env_constants.tanklength*5, 2))
 
         
         # avoid shots
-        for shot in env_state.shots:
-            bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, env_constants.tanklength, env_constants.tanklength*3, 2))
+        #~ for shot in env_state.shots:
+            #~ bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, env_constants.tanklength, env_constants.tanklength*3, 2))
 
-        enemy_flags = env_state.enemyflags
-        our_flag = env_state.myflag
-
-        #if another tank on your team has a flag, that tank becomes a tangential field
-        #also, make sure that any flag that a teammate is carrying is no longer attractive
-        flags_captured = []
-        for my_tank in env_state.mytanks:
-            if my_tank != tank and my_tank.flag != "-":
-                bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
-                flags_captured.append(my_tank.flag)
-
-        #if an enemy tank has captured our flag, they become a priority
-        public_enemy = None
-        for other_tank in env_state.enemytanks:
-            if other_tank.flag == env_constants.color:
-                public_enemy = other_tank
-
-        if tank.flag != "-":
-            goal = self.base 
-            cr = (self.base.corner1_x - self.base.corner2_x) / 2
-            goal.x = self.base.corner1_x + cr
-            goal.y = self.base.corner1_y + cr
-            cs = 10
-            a = 3
-        elif public_enemy is not None:
-            goal1 = public_enemy
-            goal2 = self.closest_flag(enemy_flags, tank, flags_captured)
-            dist_goal1 = compute_distance(goal1.x, tank.x, goal1.y, tank.y)
-            dist_goal2 = compute_distance(goal2.x, tank.x, goal2.y, tank.y)
-            if dist_goal1 < dist_goal2:
-                goal = goal1 
-                cr = int(env_constants.tanklength)
-                cs = 20
-                a = 3
-            else:
-                goal = goal2
-                cr = 2
-                cs = 20
-                a = 2
-        else:
-            goal = self.closest_flag(enemy_flags, tank, flags_captured)
-            cr = 2
-            cs = 20
-            a = 2
-        bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
+        #~ enemy_flags = env_state.enemyflags
+        #~ our_flag = env_state.myflag
+#~ 
+        #~ #if another tank on your team has a flag, that tank becomes a tangential field
+        #~ #also, make sure that any flag that a teammate is carrying is no longer attractive
+        #~ flags_captured = []
+        #~ for my_tank in env_state.mytanks:
+            #~ if my_tank != tank and my_tank.flag != "-":
+                #~ bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
+                #~ flags_captured.append(my_tank.flag)
+#~ 
+        #~ #if an enemy tank has captured our flag, they become a priority
+        #~ public_enemy = None
+        #~ for other_tank in env_state.enemytanks:
+            #~ if other_tank.flag == env_constants.color:
+                #~ public_enemy = other_tank
+#~ 
+        #~ if tank.flag != "-":
+            #~ goal = self.base 
+            #~ cr = (self.base.corner1_x - self.base.corner2_x) / 2
+            #~ goal.x = self.base.corner1_x + cr
+            #~ goal.y = self.base.corner1_y + cr
+            #~ cs = 10
+            #~ a = 3
+        #~ elif public_enemy is not None:
+            #~ goal1 = public_enemy
+            #~ goal2 = self.closest_flag(enemy_flags, tank, flags_captured)
+            #~ dist_goal1 = compute_distance(goal1.x, tank.x, goal1.y, tank.y)
+            #~ dist_goal2 = compute_distance(goal2.x, tank.x, goal2.y, tank.y)
+            #~ if dist_goal1 < dist_goal2:
+                #~ goal = goal1 
+                #~ cr = int(env_constants.tanklength)
+                #~ cs = 20
+                #~ a = 3
+            #~ else:
+                #~ goal = goal2
+                #~ cr = 2
+                #~ cs = 20
+                #~ a = 2
+        #~ else:
+            #~ goal = self.closest_flag(enemy_flags, tank, flags_captured)
+            #~ cr = 2
+            #~ cs = 20
+            #~ a = 2
+        #~ bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
 
         
         def pfield_function(x, y):
@@ -186,8 +212,8 @@ class PFieldTank(Thread):
                 dy += newdy
             return dx, dy
         
-        dx, dy = pfield_function(tank.x, tank.y)
-        self.move_to_position(tank, tank.x + dx, tank.y + dy)
+        dx, dy = pfield_function(mytank.x, mytank.y)
+        self.move_to_position(mytank, mytank.x + dx, mytank.y + dy)
         if self.graph:
             self.graph.add_function(pfield_function)
     

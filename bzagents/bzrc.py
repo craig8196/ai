@@ -21,6 +21,7 @@ import socket
 import time
 from threading import Lock
 from env import EnvironmentState, EnvironmentConstants
+import numpy
 
 
 class BZRC:
@@ -399,7 +400,28 @@ class BZRC:
         self.sendline('constants')
         self.read_ack()
         return self.read_constants()
-
+    
+    def get_grid_as_matrix(self, tankid):
+        """Return occgrid as numpy matrix."""
+        self.lock.acquire()
+        self.sendline('occgrid %d' % tankid)
+        self.read_ack()
+        
+        response = self.read_arr()
+        if 'fail' in response:
+            return None
+        pos = tuple(int(a) for a in self.expect('at')[0].split(','))
+        size = tuple(int(a) for a in self.expect('size')[0].split('x'))
+        grid = numpy.zeros(size)
+        for x in xrange(size[0]):
+            line = self.read_arr()[0]
+            for y in xrange(size[1]):
+                if line[y] == '1':
+                    grid[x][y] = 1
+        self.expect('end', True)
+        self.lock.release()
+        return pos[0] + 400, pos[1] + 400, grid
+    
     # Optimized queries
 
     def get_lots_o_stuff(self):

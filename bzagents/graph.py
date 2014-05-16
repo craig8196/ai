@@ -73,6 +73,9 @@ class PotentialFieldGraph(Thread):
         x2, y2 = p2
         return 'set arrow from %s, %s to %s, %s nohead lt 3\n' % (x1, y1, x2, y2)
     
+    def draw_dot(self, x, y):
+        return ''
+    
     def draw_obstacles(self, obstacles):
         '''Return a string which tells Gnuplot to draw all of the obstacles.'''
         s = 'unset arrow\n'
