@@ -284,7 +284,7 @@ functions_to_plot = {
     'random_field.gpi': random_field,
     'counterclockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, -1),
     'clockwise_tangential_function.gpi': make_tangential_function(0, 0, 50, 300, 1),
-    'line_field.gpi': make_line_function(0, 0, 300, 300, 50, 90),
+    'line_field.gpi': make_line_function(0, 0, 300, 300, 50, 180),
 }
 
 def create_gpi_files(functions, directory):

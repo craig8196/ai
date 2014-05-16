@@ -138,6 +138,12 @@ class Agent(object):
         
         self.gp = GnuplotProcess(persist=False)
         self.gp.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
+        #~ self.gpa = GnuplotProcess(persist=False)
+        #~ self.gpa.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
+        #~ self.gpr = GnuplotProcess(persist=False)
+        #~ self.gpr.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
+        self.gpt = GnuplotProcess(persist=False)
+        self.gpt.write(gnuplot_header(-self.WORLDSIZE / 2, self.WORLDSIZE / 2))
 
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
@@ -154,7 +160,7 @@ class Agent(object):
         
         for tank in mytanks:
             if tank.index == 0:
-                self.behave(tank, time_diff)
+                self.behave(tank, time_diff, True)
             else:
                 self.behave(tank, time_diff)
 
@@ -212,8 +218,20 @@ class Agent(object):
 
         
         # avoid shots
+        #~ temp_bag = []
         for shot in self.shots:
+            #~ temp_rep = make_circle_repulsion_function(shot.x, shot.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*3, 2)
             bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, int(self.constants['tanklength']), int(self.constants['tanklength'])*3, 2))
+        #~ def temp_repuls(x, y):
+            #~ dx = 0
+            #~ dy = 0
+            #~ for field_function in bag_o_fields:
+                #~ newdx, newdy = field_function(x, y)
+                #~ dx += newdx
+                #~ dy += newdy
+            #~ return dx, dy
+        #~ if plot:
+            #~ self.gpr.write(plot_field(temp_repuls))
 
         enemy_flags = []
         for flag in self.flags:
@@ -227,8 +245,11 @@ class Agent(object):
         flags_captured = []
         for my_tank in self.mytanks:
             if my_tank != tank and my_tank.flag != "-":
+                #~ temp_tang = make_tangential_function(my_tank.x, my_tank.y, int(self.constants['tanklength']), 80, 1, 20)
                 bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, int(self.constants['tanklength']), 80, 1, 20))
                 flags_captured.append(my_tank.flag)
+                #~ if plot:
+                    #~ self.gpt.write(plot_field(temp_tang))
 
         #if an enemy tank has captured our flag, they become a priority
         public_enemy = None
@@ -263,6 +284,9 @@ class Agent(object):
             cr = 2
             cs = 20
             a = 2
+        #~ temp_circ = make_circle_attraction_function(goal.x, goal.y, cr, cs, a)
+        #~ if plot:
+            #~ self.gpa.write(plot_field(temp_circ))
         bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
 
         

@@ -19,6 +19,9 @@ import math
 import sys
 import socket
 import time
+from threading import Lock
+from env import EnvironmentState, EnvironmentConstants
+import numpy
 
 
 class BZRC:
@@ -36,6 +39,8 @@ class BZRC:
         self.conn = sock.makefile(bufsize=1)
 
         self.handshake()
+        
+        self.lock = Lock()
 
     def handshake(self):
         """Perform the handshake with the remote tanks."""
@@ -353,9 +358,12 @@ class BZRC:
 
     def get_occgrid(self, tankid):
         """Request an occupancy grid for a tank"""
+        self.lock.acquire()
         self.sendline('occgrid %d' % tankid)
         self.read_ack()
-        return self.read_occgrid()
+        result = self.read_occgrid()
+        self.lock.release()
+        return result
 
     def get_flags(self):
         """Request a list of flags."""
@@ -392,7 +400,28 @@ class BZRC:
         self.sendline('constants')
         self.read_ack()
         return self.read_constants()
-
+    
+    def get_grid_as_matrix(self, tankid):
+        """Return occgrid as numpy matrix."""
+        self.lock.acquire()
+        self.sendline('occgrid %d' % tankid)
+        self.read_ack()
+        
+        response = self.read_arr()
+        if 'fail' in response:
+            return None
+        pos = tuple(int(a) for a in self.expect('at')[0].split(','))
+        size = tuple(int(a) for a in self.expect('size')[0].split('x'))
+        grid = numpy.zeros(size)
+        for x in xrange(size[0]):
+            line = self.read_arr()[0]
+            for y in xrange(size[1]):
+                if line[y] == '1':
+                    grid[x][y] = 1
+        self.expect('end', True)
+        self.lock.release()
+        return pos[0] + 400, pos[1] + 400, grid
+    
     # Optimized queries
 
     def get_lots_o_stuff(self):
@@ -401,6 +430,7 @@ class BZRC:
         Returns a tuple with the four results.
 
         """
+        self.lock.acquire()
         self.sendline('mytanks')
         self.sendline('othertanks')
         self.sendline('flags')
@@ -414,11 +444,62 @@ class BZRC:
         flags = self.read_flags()
         self.read_ack()
         shots = self.read_shots()
-
+        self.lock.release()
         return (mytanks, othertanks, flags, shots)
-
+    
+    def get_environment_state(self, color):
+        self.lock.acquire()
+        env = EnvironmentState()
+        
+        self.sendline('flags')
+        self.sendline('shots')
+        self.sendline('mytanks')
+        self.sendline('othertanks')
+        
+        self.read_ack()
+        flags = self.read_flags()
+        enemy_flags = []
+        for flag in flags:
+            if flag.color != color:
+                enemy_flags.append(flag)
+            else:
+                env.myflag = flag
+        env.enemyflags = enemy_flags
+        self.read_ack()
+        env.shots = self.read_shots()
+        self.read_ack()
+        env.mytanks = self.read_mytanks()
+        self.read_ack()
+        othertanks = self.read_othertanks()
+        env.enemytanks = [tank for tank in othertanks if tank.color != color]
+        self.lock.release()
+        return env
+    
+    def get_environment_constants(self):
+        self.lock.acquire()
+        con = EnvironmentConstants()
+        
+        self.sendline('constants')
+        self.read_ack()
+        con.set_constants(self.read_constants())
+        if con.truenegative == None and con.truepositive == None:
+            self.sendline('obstacles')
+        self.sendline('bases')
+        self.sendline('teams')
+        
+        if con.truenegative == None and con.truepositive == None:
+            self.read_ack()
+            con.obstacles = self.read_obstacles()
+        self.read_ack()
+        con.bases = self.read_bases()
+        self.read_ack()
+        con.teams = self.read_teams()
+        self.lock.release()
+        return con
+    
     def do_commands(self, commands):
         """Send commands for a bunch of tanks in a network-optimized way."""
+        self.lock.acquire()
         for cmd in commands:
             self.sendline('speed %s %s' % (cmd.index, cmd.speed))
             self.sendline('angvel %s %s' % (cmd.index, cmd.angvel))
@@ -437,6 +518,7 @@ class BZRC:
             else:
                 result_shoot = False
             results.append((result_speed, result_angvel, result_shoot))
+        self.lock.release()
         return results
 
 
