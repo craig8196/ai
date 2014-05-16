@@ -13,6 +13,7 @@ from utilities import ThreadSafeQueue
 from graph import PotentialFieldGraph
 from env import EnvironmentState
 from bzui import BZUI
+from grid import ObstacleVisualization
 
 
 class TeamManager(object):
