@@ -7,7 +7,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import numpy
 from numpy import zeros
-from threading import Thread, Lock
+from threading import Thread, Lock, Event
 import time
 
 
@@ -18,6 +18,12 @@ class ObstacleVisualization(Thread):
         self.width = width
         self.height = height
         self.lock = Lock()
+        self.updated = Event()
+        self.updated.clear()
+        self.ext_grid = None
+        
+    def set_external_grid(self, ext_grid):
+        self.ext_grid = ext_grid
     
     def run(self):
         self.init_window(self.width, self.height)
@@ -29,24 +35,27 @@ class ObstacleVisualization(Thread):
         glDrawPixels(width, height, GL_LUMINANCE, GL_FLOAT, self.grid)
         glFlush()
         glutSwapBuffers()
-
+    
+    def on_idle(self):
+        self.updated.wait()
+        print 'Redisplay'
+        self.updated.clear()
+        if self.ext_grid:
+            self.update_grid(self.ext_grid.grid.copy().T)
+            glutPostRedisplay()
+    
     def update_grid(self, new_grid):
         self.lock.acquire()
         self.grid = new_grid
-        #~ glutPostRedisplay()
         self.lock.release()
     
-    # mostly used for testing
     def update_grid_values(self, num):
         self.lock.acquire()
         self.grid[:] = num
-        #~ glutPostRedisplay()
         self.lock.release()
 
     def init_window(self, width, height):
         self.grid = zeros((width, height))
-        #~ self.grid = numpy.empty((width, height))
-        #~ self.grid[:] = 0.25
         self.lock.acquire()
         glutInit(sys.argv)
         glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
@@ -58,8 +67,8 @@ class ObstacleVisualization(Thread):
         glLoadIdentity()
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
-        #~ time.sleep(2)
         self.lock.release()
+        glutIdleFunc(self.on_idle)
         glutMainLoop()
 
 class Grid(object):
@@ -70,13 +79,17 @@ class Grid(object):
     NOT_OBSTACLE = 0
     
     def __init__(self, width, height):
-        self.vis = ObstacleVisualization(width, height)
-        self.vis.start()
         self.grid = numpy.empty((width, height))
         self.grid[:] = Grid.INITIAL_OBSTACLE_PROBABILITY
         self.set_true_positive(Grid.DEFAULT_TRUE_POSITIVE)
         self.set_true_negative(Grid.DEFAULT_TRUE_NEGATIVE)
         self.update_thresholds()
+        self.events = []
+        
+        self.vis = ObstacleVisualization(width, height)
+        self.add_update_event(self.vis.updated)
+        self.vis.set_external_grid(self)
+        self.vis.start()
         
     def update_thresholds(self):
         self.obstacle_threshold = self.cond_prob_obstacle_obstacle # any probability above this is considered an obstacle
@@ -85,7 +98,18 @@ class Grid(object):
             temp = self.not_obstacle_threshold
             self.not_obstacle_threshold = self.obstacle_threshold
             self.obstacle_threshold = temp
-        
+    
+    def add_update_event(self, event):
+        """Add an event that gets notified upon updating."""
+        self.events.append(event)
+    
+    def notify_update_event(self):
+        for e in self.events:
+            e.set()
+    
+    def get_shape(self):
+        return self.grid.shape
+    
     def set_true_positive(self, prob):
         self.prob_true_positive = prob
         # P(o_i,j=obstacle|s_i,j=obstacle)
@@ -121,6 +145,9 @@ class Grid(object):
     def get_item(self, x, y):
         return self.grid[x, y]
     
+    def get_value(self, x, y):
+        return self.grid[x, y]
+    
     #to be called in the tick method.
     def update(self, corner_x, corner_y, mini_grid):
         """mini_grid is a numpy matrix of ones and zeros
@@ -132,25 +159,20 @@ class Grid(object):
             for j in xrange(0, j_len):
                 self.update_cell(i + corner_x, j + corner_y, mini_grid[i, j])
         
-        self.vis.update_grid(self.grid)
+        self.notify_update_event()
 
 if __name__ == "__main__":
-    #~ ov = ObstacleVisualization(800, 800)
-    #~ ov.start()
-    #~ num = 0
-    #~ inc = 0.03
-    #~ while ov.is_alive():
-        #~ num += inc
-        #~ ov.update_grid_values(num)
-        #~ time.sleep(2)
-        #~ if num >= 1:
-            #~ inc *= -1
-    #~ ov.join()
-    g = Grid(800, 800)
-    while True:
-        time.sleep(2)
-        mini_grid = numpy.empty((50, 50))
-        mini_grid[:] = 1
-        g.update(0, 0, mini_grid)
+    ov = ObstacleVisualization(800, 800)
+    ov.start()
+    num = 0
+    inc = 0.05
+    while ov.is_alive():
+        num += inc
+        ov.update_grid_values(num)
+        time.sleep(1)
+        if num >= 1:
+            inc *= -1
+        ov.updated.set()
+    ov.join()
 
 # vim: et sw=4 sts=4

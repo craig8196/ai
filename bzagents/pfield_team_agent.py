@@ -13,8 +13,6 @@ from potential_fields import *
 from utilities import ThreadSafeQueue
 from graph import PotentialFieldGraph
 from env import EnvironmentState
-from bzui import BZUI
-from grid import ObstacleVisualization
 
 
 class TeamManager(object):
@@ -23,7 +21,7 @@ class TeamManager(object):
         self.bzrc = bzrc
         self.env_constants = self.bzrc.get_environment_constants()
         self.tanks = []
-        for i in range(0, 10):
+        for i in range(0, int(self.env_constants.get_count(self.env_constants.color))):
             self.tanks.append(PFieldTank(i, self.bzrc, self.env_constants))
         for tank in self.tanks:
             tank.setDaemon(True)
@@ -34,7 +32,8 @@ class TeamManager(object):
         try:
             import _tkinter
             import Tkinter
-            ui = BZUI(self.tanks)
+            from bzui import BZUI
+            ui = BZUI(self.tanks, self.env_constants)
             ui.setDaemon(True)
             ui.start()
         except ImportError:
@@ -133,7 +132,7 @@ class PFieldTank(Thread):
         # get sensor update every second
         if env_state.time_diff - self.last_sensor_poll > 1.0:
             self.last_sensor_poll = env_state.time_diff
-            x, y, grid = self.bzrc.get_grid_as_matrix(self.index)
+            x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
             env_constants.grid.update(x, y, grid)
         
         
