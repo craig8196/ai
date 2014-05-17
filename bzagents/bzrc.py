@@ -15,6 +15,7 @@
 
 from __future__ import division
 
+import os
 import math
 import sys
 import socket
@@ -60,7 +61,7 @@ class BZRC:
             line = self.conn.readline()
         except socket.error:
             print 'Server Shut down. Aborting'
-            sys.exit(1)
+            os._exit(1)
         if self.debug:
             print 'Received: %s' % line.split()
         return line.split()
@@ -401,7 +402,7 @@ class BZRC:
         self.read_ack()
         return self.read_constants()
     
-    def get_grid_as_matrix(self, tankid):
+    def get_grid_as_matrix(self, tankid, worldsize):
         """Return occgrid as numpy matrix."""
         self.lock.acquire()
         self.sendline('occgrid %d' % tankid)
@@ -420,7 +421,7 @@ class BZRC:
                     grid[x][y] = 1
         self.expect('end', True)
         self.lock.release()
-        return pos[0] + 400, pos[1] + 400, grid
+        return pos[0] + worldsize/2, worldsize/2 + pos[1], grid
     
     # Optimized queries
 

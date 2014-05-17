@@ -60,15 +60,17 @@ class EnvironmentConstants(object):
         if self.truepositive != None and self.truenegative != None:
             self.occgrid_enabled = True
             self.grid = Grid(self.worldsize, self.worldsize)
+            self.grid.set_true_positive(self.truepositive)
+            self.grid.set_true_negative(self.truenegative)
         else:
             self.occgrid_enabled = False
             self.grid = None
     
     def get_count(self, teamcolor):
         """Return number of tanks on given team."""
-        for base in self.bases:
-            if base.color == teamcolor:
-                return base.count
+        for team in self.teams:
+            if team.color == teamcolor:
+                return team.count
         return 0
     
     def get_obstacle_functions(self):
