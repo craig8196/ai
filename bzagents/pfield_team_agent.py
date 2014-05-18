@@ -16,6 +16,7 @@ from env import EnvironmentState
 
 
 class TeamManager(object):
+
     """Handle all command and control logic for a team of tanks."""
     def __init__(self, bzrc):
         self.bzrc = bzrc
@@ -26,6 +27,30 @@ class TeamManager(object):
         for tank in self.tanks:
             tank.setDaemon(True)
             tank.start()
+
+    @classmethod
+    def init_corners_not_yet_targeted(cls):
+        cls.corners_not_yet_targeted = []
+
+        top_left_corner = Answer()
+        top_left_corner.x = 0
+        top_left_corner.y = 0
+        cls.corners_not_yet_targeted.append(top_left_corner)
+
+        bottom_left_corner = Answer()
+        bottom_left_corner.x = 0
+        bottom_left_corner.y = self.env_constants.worldsize
+        cls.corners_not_yet_targeted.append(bottom_left_corner)
+
+        top_right_corner = Answer()
+        top_right_corner.x = self.env_constants.worldsize
+        top_right_corner.y = 0
+        cls.corners_not_yet_targeted.append(top_right_corner)
+
+        bottom_right_corner = Answer()
+        bottom_right_corner.x = self.env_constants.worldsize
+        bottom_right_corner.y = self.env_constants.worldsize
+        cls.corners_not_yet_targeted.append(bottom_right_corner)
     
     def play(self):
         """Start playing BZFlag!"""
@@ -106,6 +131,17 @@ class PFieldTank(Thread):
             s = self.remove_env_state()
             if self.keep_running:
                 self.behave(s)
+
+    def closest_object_in_a_list(self, tank, obj_list):
+        closest_dist = sys.maxint
+        chosen_object = obj_list[0]
+        return chosen_object
+        for obj in obj_list:
+            distance = compute_distance(obj.x, tank.x, obj.y, tank.y)
+            if distance < closest_dist:
+                closest_dist = distance
+                chosen_object = obj
+        return chosen_object
     
     def closest_flag(self, flags, tank, flags_captured):
         closest_dist = sys.maxint
@@ -155,16 +191,19 @@ class PFieldTank(Thread):
         #~ for shot in env_state.shots:
             #~ bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, env_constants.tanklength, env_constants.tanklength*3, 2))
 
-        #~ enemy_flags = env_state.enemyflags
+        enemy_flags = env_state.enemyflags
+        flags_not_captured = enemy_flags
+        # flags_captured = []
         #~ our_flag = env_state.myflag
 #~ 
         #~ #if another tank on your team has a flag, that tank becomes a tangential field
         #~ #also, make sure that any flag that a teammate is carrying is no longer attractive
-        #~ flags_captured = []
-        #~ for my_tank in env_state.mytanks:
-            #~ if my_tank != tank and my_tank.flag != "-":
-                #~ bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
-                #~ flags_captured.append(my_tank.flag)
+        for my_tank in env_state.mytanks:
+            if my_tank != mytank and my_tank.flag != "-":
+                # flags_captured.append(my_tank.flag)
+                # bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
+                flags_not_captured.remove(my_tank.flag)
+
 #~ 
         #~ #if an enemy tank has captured our flag, they become a priority
         #~ public_enemy = None
@@ -195,12 +234,27 @@ class PFieldTank(Thread):
                 #~ cs = 20
                 #~ a = 2
         #~ else:
-            #~ goal = self.closest_flag(enemy_flags, tank, flags_captured)
-            #~ cr = 2
-            #~ cs = 20
-            #~ a = 2
-        #~ bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
+        # goal = self.closest_flag(enemy_flags, mytank, flags_captured)
+        # cr = 2
+        # cs = 20
+        # a = 2
+        # bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
 
+        if len(flags_not_captured) > 0:
+            goal = self.closest_object_in_a_list(mytank, flags_not_captured)
+            # goal = self.closest_flag(enemy_flags, mytank, flags_captured)
+        elif len(corners_not_yet_targeted) > 0:
+            goal = self.closest_corner(mytank, TeamManager.corners_not_yet_targeted)
+            TeamManager.corners_not_yet_targeted.remove(goal)
+        else:
+            goal = Answer()
+            goal.x = env_constants.worldsize / 2
+            goal.y = env_constants.worldsize / 2
+
+        cr = 2
+        cs = 20
+        a = 20
+        bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
         
         def pfield_function(x, y):
             dx = 0
@@ -212,7 +266,8 @@ class PFieldTank(Thread):
             return dx, dy
         
         dx, dy = pfield_function(mytank.x, mytank.y)
-        self.move_to_position(mytank, mytank.x + dx, mytank.y + dy)
+
+        self.move_to_position(mytank, my_tank.x + dx, my_tank.y + dy)
         if self.graph:
             self.graph.add_function(pfield_function)
     
