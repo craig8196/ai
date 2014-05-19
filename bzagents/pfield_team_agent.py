@@ -2,12 +2,12 @@
 #################################################################
 # python pfield_team_agent.py [hostname] [port]
 #################################################################
-
+from __future__ import division
 import sys
 import math
 import time
 import random
-from threading import Thread
+from threading import Thread, Event
 from bzrc import BZRC, Command
 from potential_fields import *
 from utilities import ThreadSafeQueue
@@ -77,10 +77,17 @@ class TeamManager(object):
     
     def tick(self, time_diff):
         """Get a new state."""
-        env_state = self.bzrc.get_environment_state(self.env_constants.color, )
+        env_state = self.bzrc.get_environment_state(self.env_constants.color)
         env_state.time_diff = time_diff
+        #~ for tank in self.tanks:
+            #~ tank.add_env_state(env_state)
+        commands = []
         for tank in self.tanks:
-            tank.add_env_state(env_state)    
+            #~ tank.signal_done_updating.wait()
+            tank.behave(env_state)
+            commands.append(tank.command)
+        self.bzrc.do_commands(commands)
+        print "Updated "+str(time_diff)
 
 class PFieldTank(Thread):
     """Handle all command and control logic for a single tank."""
@@ -98,6 +105,12 @@ class PFieldTank(Thread):
         self.last_sensor_poll = -1.0
         self.exploration_goal = (0, 0)
         self.past_places = {}
+        self.signal_new_env = Event()
+        self.signal_new_env.clear()
+        self.signal_done_updating = Event()
+        self.signal_done_updating.clear()
+        self.command = None
+        self.was_just_blind = True
     
     def start_plotting(self):
         if not self.graph:
@@ -118,19 +131,23 @@ class PFieldTank(Thread):
         self.keep_running = False
     
     def add_env_state(self, env_state):
-        self.env_states.add(env_state)
+        self.env_state = env_state
+        self.signal_done_updating.clear()
+        self.signal_new_env.set()
+        
+        
     
     def remove_env_state(self):
-        result = self.env_states.remove()
-        while len(self.env_states) > 0:
-            result = self.env_states.remove()
-        return result
+        self.signal_new_env.wait()
+        self.signal_new_env.clear()
+        return self.env_state
     
     def run(self):
         while self.keep_running:
             s = self.remove_env_state()
             if self.keep_running:
                 self.behave(s)
+                self.signal_done_updating.set()
 
     def closest_object_in_a_list(self, tank, obj_list):
         closest_dist = sys.maxint
@@ -158,6 +175,37 @@ class PFieldTank(Thread):
             #~ self.past_places.pop(0)
             #~ self.past_places_functions
     
+    def is_blind(self, x, y, grid):
+        if self.was_just_blind:
+            self.was_just_blind = False
+            return True
+        else:
+            x = int(x + self.env_constants.worldsize/2 - 50)
+            y = int(y + self.env_constants.worldsize/2 - 50)
+            if x < 0:
+                x = 0
+            if y < 0:
+                y = 0
+            xmax = 100
+            ymax = 100
+            if x + xmax > self.env_constants.worldsize:
+                xmax -= x + xmax - self.env_constants.worldsize
+            if y + ymax > self.env_constants.worldsize:
+                ymax -= y + ymax - self.env_constants.worldsize
+            
+            count = 0
+            m = grid.obstacle_grid
+            for i in xrange(0, xmax):
+                for j in xrange(0, ymax):
+                    if m[x + i, y + j] == 0.5:
+                        count +=1
+            
+            if count/(xmax*ymax) >= grid.unexplored_percentage:
+                self.was_just_blind = True
+                return True
+            else:
+                return False
+    
     def behave(self, env_state):
         """Create a behavior command based on potential fields given an environment state."""
         env_constants = self.env_constants # shorten the name
@@ -165,8 +213,8 @@ class PFieldTank(Thread):
         bag_o_fields.extend(env_constants.get_obstacle_functions())
         mytank = env_state.get_mytank(self.index)
         
-        # get sensor update every second
-        if env_state.time_diff - self.last_sensor_poll > 1.0:
+        # get sensor update
+        if self.is_blind(mytank.x, mytank.y, self.env_constants.grid):
             self.last_sensor_poll = env_state.time_diff
             x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
             env_constants.grid.update(x, y, grid)
@@ -198,11 +246,11 @@ class PFieldTank(Thread):
 #~ 
         #~ #if another tank on your team has a flag, that tank becomes a tangential field
         #~ #also, make sure that any flag that a teammate is carrying is no longer attractive
-        for my_tank in env_state.mytanks:
-            if my_tank != mytank and my_tank.flag != "-":
-                # flags_captured.append(my_tank.flag)
-                # bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
-                flags_not_captured.remove(my_tank.flag)
+        #~ for my_tank in env_state.mytanks:
+            #~ if my_tank != mytank and my_tank.flag != "-":
+                #~ # flags_captured.append(my_tank.flag)
+                #~ # bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
+                #~ flags_not_captured.remove(my_tank.flag)
 
 #~ 
         #~ #if an enemy tank has captured our flag, they become a priority
@@ -267,7 +315,7 @@ class PFieldTank(Thread):
         
         dx, dy = pfield_function(mytank.x, mytank.y)
 
-        self.move_to_position(mytank, my_tank.x + dx, my_tank.y + dy)
+        self.move_to_position(mytank, mytank.x + dx, mytank.y + dy)
         if self.graph:
             self.graph.add_function(pfield_function)
     
@@ -293,8 +341,7 @@ class PFieldTank(Thread):
         target_angle = math.atan2(target_y - tank.y,
                                   target_x - tank.x)
         relative_angle = self.normalize_angle(target_angle - tank.angle)
-        command = Command(tank.index, 1, 2 * relative_angle, True)
-        self.bzrc.do_commands([command])
+        self.command = Command(tank.index, 1, 2 * relative_angle, True)
 
     def normalize_angle(self, angle):
         """Make any angle be between +/- pi."""

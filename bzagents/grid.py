@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import division
 import OpenGL
 OpenGL.ERROR_CHECKING = False
 from OpenGL.GL import *
@@ -20,7 +20,7 @@ class ObstacleVisualization(Thread):
         self.lock = Lock()
         self.updated = Event()
         self.updated.clear()
-        self.ext_grid = None
+        self.ext_grid = None # external grid
         
     def set_external_grid(self, ext_grid):
         self.ext_grid = ext_grid
@@ -37,11 +37,11 @@ class ObstacleVisualization(Thread):
         glutSwapBuffers()
     
     def on_idle(self):
-        self.updated.wait()
-        print 'Redisplay'
+        self.updated.wait(1.0)
         self.updated.clear()
         if self.ext_grid:
-            self.update_grid(self.ext_grid.grid.copy().T)
+            self.update_grid(self.ext_grid.obstacle_grid.copy().T) # Use discrete values
+            #~ self.update_grid(self.ext_grid.grid.copy().T) # Use range of probabilities
             glutPostRedisplay()
     
     def update_grid(self, new_grid):
@@ -77,14 +77,20 @@ class Grid(object):
     DEFAULT_TRUE_NEGATIVE = 0.9
     OBSTACLE = 1
     NOT_OBSTACLE = 0
+    UNKNOWN = 0.5
     
     def __init__(self, width, height):
         self.grid = numpy.empty((width, height))
         self.grid[:] = Grid.INITIAL_OBSTACLE_PROBABILITY
+        self.obstacle_grid = numpy.empty((width, height))
+        self.obstacle_grid[:] = 0.5
         self.set_true_positive(Grid.DEFAULT_TRUE_POSITIVE)
         self.set_true_negative(Grid.DEFAULT_TRUE_NEGATIVE)
         self.update_thresholds()
         self.events = []
+        self.unexplored_percentage = 1
+        self.last_unexplored_update = time.time()
+        self.unexplored_update = 5.0 # number of seconds before we refresh the percentage
         
         self.vis = ObstacleVisualization(width, height)
         self.add_update_event(self.vis.updated)
@@ -92,8 +98,8 @@ class Grid(object):
         self.vis.start()
         
     def update_thresholds(self):
-        self.obstacle_threshold = self.cond_prob_obstacle_obstacle # any probability above this is considered an obstacle
-        self.not_obstacle_threshold = self.cond_prob_obstacle_not_obstacle # any probability below this is considered to not be an obstacle
+        self.obstacle_threshold = self.cond_prob_obstacle_obstacle + (1 - self.cond_prob_obstacle_obstacle)/2# any probability above this is considered an obstacle
+        self.not_obstacle_threshold = self.cond_prob_obstacle_not_obstacle - self.cond_prob_obstacle_not_obstacle/2 # any probability below this is considered to not be an obstacle
         if self.obstacle_threshold < self.not_obstacle_threshold:
             temp = self.not_obstacle_threshold
             self.not_obstacle_threshold = self.obstacle_threshold
@@ -126,6 +132,12 @@ class Grid(object):
     
     def update_cell(self, i, j, observation):
         self.grid[i, j] = self.calculate_conditional_probability(self.grid[i, j], observation)
+        if self.grid[i, j] < self.not_obstacle_threshold:
+            self.obstacle_grid[i, j] = self.NOT_OBSTACLE
+        elif self.grid[i, j] > self.obstacle_threshold:
+            self.obstacle_grid[i, j] = self.OBSTACLE
+        else:
+            self.obstacle_grid[i, j] = 0.5
 
     #returns P(s_i,j = occupied | o_i,j) the main conditional probability that we want
     def calculate_conditional_probability(self, prob_state_is_obstacle, observation):
@@ -148,6 +160,19 @@ class Grid(object):
     def get_value(self, x, y):
         return self.grid[x, y]
     
+    def update_unexplored_percentage(self):
+        """Set the ambiguous percentage, which is the amount of the map
+        that we don't have explored.
+        """
+        if time.time() - self.last_unexplored_update > self.unexplored_update:
+            xlen, ylen = self.grid.shape
+            count = 0
+            for i in xrange(0, xlen):
+                for j in xrange(0, ylen):
+                    if self.grid[i, j] == self.UNKNOWN:
+                        count += 1
+            self.unexplored_percentage = count/(xlen*ylen)
+    
     #to be called in the tick method.
     def update(self, corner_x, corner_y, mini_grid):
         """mini_grid is a numpy matrix of ones and zeros
@@ -160,6 +185,7 @@ class Grid(object):
                 self.update_cell(i + corner_x, j + corner_y, mini_grid[i, j])
         
         self.notify_update_event()
+        self.update_unexplored_percentage()
 
 if __name__ == "__main__":
     ov = ObstacleVisualization(800, 800)

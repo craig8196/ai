@@ -72,10 +72,10 @@ class BZGUI(Frame):
         self.ENABLE_PLOT.pack(side=TOP)
         
         #CANVAS
-        self.CANVAS = Canvas(self.TOP_FRAME,  width=WORLD_WIDTH, height=WORLD_HEIGHT, bg="#000000")
-        self.CANVAS.pack()
-        self.IMG = PhotoImage(width=WORLD_WIDTH, height=WORLD_HEIGHT)
-        self.IMG_ID = self.CANVAS.create_image((WORLD_WIDTH/2, WORLD_HEIGHT/2), image=self.IMG, state=NORMAL)
+        #~ self.CANVAS = Canvas(self.TOP_FRAME,  width=WORLD_WIDTH, height=WORLD_HEIGHT, bg="#000000")
+        #~ self.CANVAS.pack()
+        #~ self.IMG = PhotoImage(width=WORLD_WIDTH, height=WORLD_HEIGHT)
+        #~ self.IMG_ID = self.CANVAS.create_image((WORLD_WIDTH/2, WORLD_HEIGHT/2), image=self.IMG, state=NORMAL)
         
         # BOTTOM FRAME, for the text area
         self.BOTTOM_FRAME = Frame(self)
