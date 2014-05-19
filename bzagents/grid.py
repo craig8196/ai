@@ -72,7 +72,7 @@ class ObstacleVisualization(Thread):
         glutMainLoop()
 
 class Grid(object):
-    INITIAL_OBSTACLE_PROBABILITY = 0.7
+    INITIAL_OBSTACLE_PROBABILITY = 0.95
     DEFAULT_TRUE_POSITIVE = 0.97
     DEFAULT_TRUE_NEGATIVE = 0.9
     OBSTACLE = 1
@@ -90,13 +90,22 @@ class Grid(object):
         self.events = []
         self.unexplored_percentage = 1
         self.last_unexplored_update = time.time()
-        self.unexplored_update = 5.0 # number of seconds before we refresh the percentage
+        self.unexplored_update = 10.0 # number of seconds before we refresh the percentage
         
         self.vis = ObstacleVisualization(width, height)
         self.add_update_event(self.vis.updated)
         self.vis.set_external_grid(self)
         self.vis.start()
         
+    def get_unexplored_point(self):
+        (i_len, j_len) = self.grid.shape
+        
+        for i in xrange(0, i_len):
+            for j in xrange(0, j_len):
+                if self.obstacle_grid[i, j] == self.UNKNOWN:
+                    return i, j
+        return 0, 0
+    
     def update_thresholds(self):
         self.obstacle_threshold = self.cond_prob_obstacle_obstacle + (1 - self.cond_prob_obstacle_obstacle)/2# any probability above this is considered an obstacle
         self.not_obstacle_threshold = self.cond_prob_obstacle_not_obstacle - self.cond_prob_obstacle_not_obstacle/2 # any probability below this is considered to not be an obstacle
@@ -169,9 +178,22 @@ class Grid(object):
             count = 0
             for i in xrange(0, xlen):
                 for j in xrange(0, ylen):
-                    if self.grid[i, j] == self.UNKNOWN:
+                    if self.obstacle_grid[i, j] == self.UNKNOWN:
                         count += 1
             self.unexplored_percentage = count/(xlen*ylen)
+            print "Unexplored percentage: " + str(self.unexplored_percentage)
+    
+    #~ def is_explored(self):
+        #~ if self.explored:
+            #~ return True
+        #~ else:
+            #~ self.last_explored_point
+            #~ xlen, ylen = self.grid.shape
+            #~ count = 0
+            #~ for i in xrange(0, xlen):
+                #~ for j in xrange(0, ylen):
+                    #~ if self.obstacle_grid[i, j] == self.UNKNOWN:
+                        #~ count += 1
     
     #to be called in the tick method.
     def update(self, corner_x, corner_y, mini_grid):
@@ -185,7 +207,7 @@ class Grid(object):
                 self.update_cell(i + corner_x, j + corner_y, mini_grid[i, j])
         
         self.notify_update_event()
-        self.update_unexplored_percentage()
+        #~ self.update_unexplored_percentage()
 
 if __name__ == "__main__":
     ov = ObstacleVisualization(800, 800)

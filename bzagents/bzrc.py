@@ -421,6 +421,7 @@ class BZRC:
                     grid[x][y] = 1
         self.expect('end', True)
         self.lock.release()
+        #~ print "Sensor size: " + str(size[0]) + " " + str(size[1])
         return pos[0] + worldsize/2, worldsize/2 + pos[1], grid
     
     # Optimized queries

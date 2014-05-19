@@ -13,6 +13,7 @@ from potential_fields import *
 from utilities import ThreadSafeQueue
 from graph import PotentialFieldGraph
 from env import EnvironmentState
+from threading import Thread, Lock, Event
 
 
 class TeamManager(object):
@@ -22,35 +23,57 @@ class TeamManager(object):
         self.bzrc = bzrc
         self.env_constants = self.bzrc.get_environment_constants()
         self.tanks = []
+        self.corners = []
         for i in range(0, int(self.env_constants.get_count(self.env_constants.color))):
-            self.tanks.append(PFieldTank(i, self.bzrc, self.env_constants))
+            self.tanks.append(PFieldTank(i, self.bzrc, self.corners, self.env_constants))
         for tank in self.tanks:
             tank.setDaemon(True)
             tank.start()
 
-    @classmethod
-    def init_corners_not_yet_targeted(cls):
-        cls.corners_not_yet_targeted = []
-
-        top_left_corner = Answer()
-        top_left_corner.x = 0
+        top_left_corner = Container()
+        top_left_corner.x = 0   
         top_left_corner.y = 0
-        cls.corners_not_yet_targeted.append(top_left_corner)
+        self.corners.append(top_left_corner)
 
-        bottom_left_corner = Answer()
+        bottom_left_corner = Container()
         bottom_left_corner.x = 0
         bottom_left_corner.y = self.env_constants.worldsize
-        cls.corners_not_yet_targeted.append(bottom_left_corner)
+        self.corners.append(bottom_left_corner)
 
-        top_right_corner = Answer()
+        top_right_corner = Container()
         top_right_corner.x = self.env_constants.worldsize
         top_right_corner.y = 0
-        cls.corners_not_yet_targeted.append(top_right_corner)
+        self.corners.append(top_right_corner)
 
-        bottom_right_corner = Answer()
+        bottom_right_corner = Container()
         bottom_right_corner.x = self.env_constants.worldsize
         bottom_right_corner.y = self.env_constants.worldsize
-        cls.corners_not_yet_targeted.append(bottom_right_corner)
+        self.corners.append(bottom_right_corner)
+
+        # self.init_corners_not_yet_targeted()
+
+    # def init_corners_not_yet_targeted(self):
+    #     self.corners_not_yet_targeted = []
+
+    #     top_left_corner = Container()
+    #     top_left_corner.x = 0
+    #     top_left_corner.y = 0
+    #     self.corners_not_yet_targeted.append(top_left_corner)
+
+    #     bottom_left_corner = Container()
+    #     bottom_left_corner.x = 0
+    #     bottom_left_corner.y = self.env_constants.worldsize
+    #     self.corners_not_yet_targeted.append(bottom_left_corner)
+
+    #     top_right_corner = Container()
+    #     top_right_corner.x = self.env_constants.worldsize
+    #     top_right_corner.y = 0
+    #     self.corners_not_yet_targeted.append(top_right_corner)
+
+    #     bottom_right_corner = Container()
+    #     bottom_right_corner.x = self.env_constants.worldsize
+    #     bottom_right_corner.y = self.env_constants.worldsize
+    #     self.corners_not_yet_targeted.append(bottom_right_corner)
     
     def play(self):
         """Start playing BZFlag!"""
@@ -79,12 +102,12 @@ class TeamManager(object):
         """Get a new state."""
         env_state = self.bzrc.get_environment_state(self.env_constants.color)
         env_state.time_diff = time_diff
-        #~ for tank in self.tanks:
-            #~ tank.add_env_state(env_state)
+        for tank in self.tanks:
+            tank.add_env_state(env_state)
         commands = []
         for tank in self.tanks:
-            #~ tank.signal_done_updating.wait()
-            tank.behave(env_state)
+            tank.signal_done_updating.wait()
+            #~ tank.behave(env_state)
             commands.append(tank.command)
         self.bzrc.do_commands(commands)
         print "Updated "+str(time_diff)
@@ -92,7 +115,7 @@ class TeamManager(object):
 class PFieldTank(Thread):
     """Handle all command and control logic for a single tank."""
     
-    def __init__(self, index, bzrc, env_constants):
+    def __init__(self, index, bzrc, corners, env_constants):
         """The brain must take in a state and produce a command."""
         super(PFieldTank, self).__init__()
         self.index = index # same as tank id
@@ -111,6 +134,20 @@ class PFieldTank(Thread):
         self.signal_done_updating.clear()
         self.command = None
         self.was_just_blind = True
+        self.exploration_destination = None
+        self.next_explore_point = (0, 0)
+        self.past_time_stamp = -1.0
+        self.past = []
+        self.prev_x = 0
+        self.prev_y = 0
+        self.obstacle_functions = []
+        
+        self.goal = Container()
+        self.goal.x = -1
+        self.goal.y = -1
+        self.corners = corners
+        self.heading_towards_corner = False
+        
     
     def start_plotting(self):
         if not self.graph:
@@ -152,7 +189,6 @@ class PFieldTank(Thread):
     def closest_object_in_a_list(self, tank, obj_list):
         closest_dist = sys.maxint
         chosen_object = obj_list[0]
-        return chosen_object
         for obj in obj_list:
             distance = compute_distance(obj.x, tank.x, obj.y, tank.y)
             if distance < closest_dist:
@@ -176,35 +212,126 @@ class PFieldTank(Thread):
             #~ self.past_places_functions
     
     def is_blind(self, x, y, grid):
-        if self.was_just_blind:
-            self.was_just_blind = False
+        x = int(x + self.env_constants.worldsize/2 - 50)
+        y = int(y + self.env_constants.worldsize/2 - 50)
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0
+        xmax = 90
+        ymax = 90
+        if x + xmax > self.env_constants.worldsize:
+            xmax -= x + xmax - self.env_constants.worldsize
+        if y + ymax > self.env_constants.worldsize:
+            ymax -= y + ymax - self.env_constants.worldsize
+        
+        count = 0
+        m = grid.obstacle_grid
+        for i in xrange(0, xmax):
+            for j in xrange(0, ymax):
+                if m[x + i, y + j] == grid.UNKNOWN:
+                    count +=1
+        
+        if count/(xmax*ymax) >= 0.1:
             return True
         else:
+            return False
+    
+    def should_explore(self, grid):
+        if not self.exploration_destination:
+            return True
+        if self.exploration_destination[0] == -1 and self.exploration_destination[1] == -1:
+            return False
+        else:
+            return True
+    
+    def set_exploration_destination(self, x, y, grid):
+        if self.exploration_destination:
+            xtemp, ytemp = self.exploration_destination
+            xtemp = int(xtemp + self.env_constants.worldsize/2)
+            ytemp = int(ytemp + self.env_constants.worldsize/2)
+            if grid.obstacle_grid[xtemp, ytemp] != grid.UNKNOWN:
+                self.exploration_destination = None
+        if not self.exploration_destination:
             x = int(x + self.env_constants.worldsize/2 - 50)
             y = int(y + self.env_constants.worldsize/2 - 50)
             if x < 0:
                 x = 0
             if y < 0:
                 y = 0
-            xmax = 100
-            ymax = 100
+            xmax = 90
+            ymax = 90
             if x + xmax > self.env_constants.worldsize:
                 xmax -= x + xmax - self.env_constants.worldsize
             if y + ymax > self.env_constants.worldsize:
                 ymax -= y + ymax - self.env_constants.worldsize
             
             count = 0
+            # find nearest unknown
             m = grid.obstacle_grid
             for i in xrange(0, xmax):
                 for j in xrange(0, ymax):
-                    if m[x + i, y + j] == 0.5:
-                        count +=1
+                    if m[x + i, y + j] == grid.UNKNOWN:
+                        self.exploration_destination = (x + i - self.env_constants.worldsize/2,
+                                                        y + j - self.env_constants.worldsize/2)
+                        return
             
-            if count/(xmax*ymax) >= grid.unexplored_percentage:
-                self.was_just_blind = True
-                return True
-            else:
-                return False
+            # go towards an empty space
+            for i in xrange(0, xmax):
+                for j in xrange(0, ymax):
+                    if m[x + i, y + j] == grid.NOT_OBSTACLE:
+                        self.exploration_destination = (x + i - self.env_constants.worldsize/2,
+                                                        y + j - self.env_constants.worldsize/2)
+                        return
+            
+            # find an unknown pixel
+            i_start = self.next_explore_point[0]
+            for i in xrange(i_start, self.env_constants.worldsize):
+                for j in xrange(0, self.env_constants.worldsize):
+                    if m[i, j] == grid.UNKNOWN:
+                        self.exploration_destination = (i - self.env_constants.worldsize/2,
+                                                   j - self.env_constants.worldsize/2)
+                        self.next_explore_point = (i, j)
+                        return
+            
+            self.exploration_destination = (-1, -1)
+    
+    
+    
+    def mark_where_ive_been(self, x, y, time_diff):
+        if time_diff - self.past_time_stamp > 1.0:
+            self.past.append(make_circle_repulsion_function(x, y, 0, 100, 0.5))
+            if len(self.past) > 10:
+                self.past.pop(0)
+            self.past_time_stamp = time_diff
+    
+    def get_obstacle_point(self, x, y, grid):
+        x = int(x + self.env_constants.worldsize/2 - 50)
+        y = int(y + self.env_constants.worldsize/2 - 50)
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0
+        xmax = 100
+        ymax = 100
+        if x + xmax > self.env_constants.worldsize:
+            xmax -= x + xmax - self.env_constants.worldsize
+        if y + ymax > self.env_constants.worldsize:
+            ymax -= y + ymax - self.env_constants.worldsize
+        
+        count = 0
+        # find nearest obstacle
+        m = grid.obstacle_grid
+        for i in xrange(0, xmax):
+            for j in xrange(0, ymax):
+                if m[x + i, y + j] == grid.OBSTACLE:
+                    return (x + i - self.env_constants.worldsize/2,
+                            y + j - self.env_constants.worldsize/2)
+    
+    def get_unstuck(self, x, y, grid):
+        if abs(self.prev_x - x) < 1 and abs(self.prev_y - y) < 1:
+            xobs, yobs = self.get_obstacle_point(x, y, grid)
+            self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 0, 100, 0.7))
     
     def behave(self, env_state):
         """Create a behavior command based on potential fields given an environment state."""
@@ -214,95 +341,24 @@ class PFieldTank(Thread):
         mytank = env_state.get_mytank(self.index)
         
         # get sensor update
-        if self.is_blind(mytank.x, mytank.y, self.env_constants.grid):
+        if env_state.time_diff - self.last_sensor_poll > 5.0 or self.is_blind(mytank.x, mytank.y, env_constants.grid):
             self.last_sensor_poll = env_state.time_diff
             x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
             env_constants.grid.update(x, y, grid)
         
-        
-        
-        #~ x, y = self.exploration_goal
-        #~ prob = env_constants.grid.get_item(x, y)
-        #~ lb = env_constants.grid.not_obstacle_threshold
-        #~ ub = env_constants.grid.obstacle_threshold
-        #~ if prob < lb or prob > ub:
-            #~ x = random.randint(0, env_constants.worldsize-1)
-            #~ y = random.randint(0, env_constants.worldsize-1)
-        #~ bag_o_fields.append(make_circle_attraction_function(x - env_constants.worldsize/2, y - env_constants.worldsize/2, 1, 100, 2))
-        # avoid enemies
-        #~ for enemy in env_state.enemytanks:
-            #~ if enemy.status == self.env_constants.alive:
-                #~ bag_o_fields.append(make_circle_repulsion_function(enemy.x, enemy.y, env_constants.tanklength, env_constants.tanklength*5, 2))
-
-        
-        # avoid shots
-        #~ for shot in env_state.shots:
-            #~ bag_o_fields.append(make_circle_repulsion_function(shot.x, shot.y, env_constants.tanklength, env_constants.tanklength*3, 2))
-
-        enemy_flags = env_state.enemyflags
-        flags_not_captured = enemy_flags
-        # flags_captured = []
-        #~ our_flag = env_state.myflag
-#~ 
-        #~ #if another tank on your team has a flag, that tank becomes a tangential field
-        #~ #also, make sure that any flag that a teammate is carrying is no longer attractive
-        #~ for my_tank in env_state.mytanks:
-            #~ if my_tank != mytank and my_tank.flag != "-":
-                #~ # flags_captured.append(my_tank.flag)
-                #~ # bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
-                #~ flags_not_captured.remove(my_tank.flag)
-
-#~ 
-        #~ #if an enemy tank has captured our flag, they become a priority
-        #~ public_enemy = None
-        #~ for other_tank in env_state.enemytanks:
-            #~ if other_tank.flag == env_constants.color:
-                #~ public_enemy = other_tank
-#~ 
-        #~ if tank.flag != "-":
-            #~ goal = self.base 
-            #~ cr = (self.base.corner1_x - self.base.corner2_x) / 2
-            #~ goal.x = self.base.corner1_x + cr
-            #~ goal.y = self.base.corner1_y + cr
-            #~ cs = 10
-            #~ a = 3
-        #~ elif public_enemy is not None:
-            #~ goal1 = public_enemy
-            #~ goal2 = self.closest_flag(enemy_flags, tank, flags_captured)
-            #~ dist_goal1 = compute_distance(goal1.x, tank.x, goal1.y, tank.y)
-            #~ dist_goal2 = compute_distance(goal2.x, tank.x, goal2.y, tank.y)
-            #~ if dist_goal1 < dist_goal2:
-                #~ goal = goal1 
-                #~ cr = int(env_constants.tanklength)
-                #~ cs = 20
-                #~ a = 3
-            #~ else:
-                #~ goal = goal2
-                #~ cr = 2
-                #~ cs = 20
-                #~ a = 2
-        #~ else:
-        # goal = self.closest_flag(enemy_flags, mytank, flags_captured)
-        # cr = 2
-        # cs = 20
-        # a = 2
-        # bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
-
-        if len(flags_not_captured) > 0:
-            goal = self.closest_object_in_a_list(mytank, flags_not_captured)
-            # goal = self.closest_flag(enemy_flags, mytank, flags_captured)
-        elif len(corners_not_yet_targeted) > 0:
-            goal = self.closest_corner(mytank, TeamManager.corners_not_yet_targeted)
-            TeamManager.corners_not_yet_targeted.remove(goal)
+        # should I explore?
+        if self.should_explore(env_constants.grid):
+            self.set_exploration_destination(mytank.x, mytank.y, env_constants.grid)
+            x, y = self.exploration_destination
+            bag_o_fields.append(make_circle_attraction_function(x, y, 0, 80, 1.25))
         else:
-            goal = Answer()
-            goal.x = env_constants.worldsize / 2
-            goal.y = env_constants.worldsize / 2
-
-        cr = 2
-        cs = 20
-        a = 20
-        bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
+            pass
+        
+        self.mark_where_ive_been(mytank.x, mytank.y, env_state.time_diff)
+        bag_o_fields.extend(self.past)
+        
+        self.get_unstuck(mytank.x, mytank.y, env_constants.grid)
+        bag_o_fields.extend(self.obstacle_functions)
         
         def pfield_function(x, y):
             dx = 0
@@ -342,7 +398,8 @@ class PFieldTank(Thread):
                                   target_x - tank.x)
         relative_angle = self.normalize_angle(target_angle - tank.angle)
         self.command = Command(tank.index, 1, 2 * relative_angle, True)
-
+    
+    
     def normalize_angle(self, angle):
         """Make any angle be between +/- pi."""
         angle -= 2 * math.pi * int (angle / (2 * math.pi))
@@ -351,6 +408,19 @@ class PFieldTank(Thread):
         elif angle > math.pi:
             angle -= 2 * math.pi
         return angle
+
+# class Corners(object):
+
+#     @classmethod
+#     def init_corners_not_yet_targeted(cls, bzrc):
+#         cls.corners = []
+#         cls.lock = Lock()
+#         env_constants = bzrc.get_environment_constants()
+
+
+
+class Container(object):
+    pass
 
 def main():
     # Process CLI arguments.
@@ -367,6 +437,7 @@ def main():
     bzrc = BZRC(host, int(port))
 
     team = TeamManager(bzrc)
+    # Corners.init_corners_not_yet_targeted(bzrc)
     team.play()
 
 if __name__ == '__main__':
