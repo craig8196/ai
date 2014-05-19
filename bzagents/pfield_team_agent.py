@@ -13,6 +13,7 @@ from potential_fields import *
 from utilities import ThreadSafeQueue
 from graph import PotentialFieldGraph
 from env import EnvironmentState
+from threading import Thread, Lock, Event
 
 
 class TeamManager(object):
@@ -22,35 +23,57 @@ class TeamManager(object):
         self.bzrc = bzrc
         self.env_constants = self.bzrc.get_environment_constants()
         self.tanks = []
+        self.corners = []
         for i in range(0, int(self.env_constants.get_count(self.env_constants.color))):
-            self.tanks.append(PFieldTank(i, self.bzrc, self.env_constants))
+            self.tanks.append(PFieldTank(i, self.bzrc, self.corners, self.env_constants))
         for tank in self.tanks:
             tank.setDaemon(True)
             tank.start()
 
-    @classmethod
-    def init_corners_not_yet_targeted(cls):
-        cls.corners_not_yet_targeted = []
-
-        top_left_corner = Answer()
-        top_left_corner.x = 0
+        top_left_corner = Container()
+        top_left_corner.x = 0   
         top_left_corner.y = 0
-        cls.corners_not_yet_targeted.append(top_left_corner)
+        self.corners.append(top_left_corner)
 
-        bottom_left_corner = Answer()
+        bottom_left_corner = Container()
         bottom_left_corner.x = 0
         bottom_left_corner.y = self.env_constants.worldsize
-        cls.corners_not_yet_targeted.append(bottom_left_corner)
+        self.corners.append(bottom_left_corner)
 
-        top_right_corner = Answer()
+        top_right_corner = Container()
         top_right_corner.x = self.env_constants.worldsize
         top_right_corner.y = 0
-        cls.corners_not_yet_targeted.append(top_right_corner)
+        self.corners.append(top_right_corner)
 
-        bottom_right_corner = Answer()
+        bottom_right_corner = Container()
         bottom_right_corner.x = self.env_constants.worldsize
         bottom_right_corner.y = self.env_constants.worldsize
-        cls.corners_not_yet_targeted.append(bottom_right_corner)
+        self.corners.append(bottom_right_corner)
+
+        # self.init_corners_not_yet_targeted()
+
+    # def init_corners_not_yet_targeted(self):
+    #     self.corners_not_yet_targeted = []
+
+    #     top_left_corner = Container()
+    #     top_left_corner.x = 0
+    #     top_left_corner.y = 0
+    #     self.corners_not_yet_targeted.append(top_left_corner)
+
+    #     bottom_left_corner = Container()
+    #     bottom_left_corner.x = 0
+    #     bottom_left_corner.y = self.env_constants.worldsize
+    #     self.corners_not_yet_targeted.append(bottom_left_corner)
+
+    #     top_right_corner = Container()
+    #     top_right_corner.x = self.env_constants.worldsize
+    #     top_right_corner.y = 0
+    #     self.corners_not_yet_targeted.append(top_right_corner)
+
+    #     bottom_right_corner = Container()
+    #     bottom_right_corner.x = self.env_constants.worldsize
+    #     bottom_right_corner.y = self.env_constants.worldsize
+    #     self.corners_not_yet_targeted.append(bottom_right_corner)
     
     def play(self):
         """Start playing BZFlag!"""
@@ -85,7 +108,7 @@ class TeamManager(object):
 class PFieldTank(Thread):
     """Handle all command and control logic for a single tank."""
     
-    def __init__(self, index, bzrc, env_constants):
+    def __init__(self, index, bzrc, corners, env_constants):
         """The brain must take in a state and produce a command."""
         super(PFieldTank, self).__init__()
         self.index = index # same as tank id
@@ -98,6 +121,11 @@ class PFieldTank(Thread):
         self.last_sensor_poll = -1.0
         self.exploration_goal = (0, 0)
         self.past_places = {}
+        self.goal = Container()
+        self.goal.x = -1
+        self.goal.y = -1
+        self.corners = corners
+        self.heading_towards_corner = False
     
     def start_plotting(self):
         if not self.graph:
@@ -135,7 +163,6 @@ class PFieldTank(Thread):
     def closest_object_in_a_list(self, tank, obj_list):
         closest_dist = sys.maxint
         chosen_object = obj_list[0]
-        return chosen_object
         for obj in obj_list:
             distance = compute_distance(obj.x, tank.x, obj.y, tank.y)
             if distance < closest_dist:
@@ -162,7 +189,7 @@ class PFieldTank(Thread):
         """Create a behavior command based on potential fields given an environment state."""
         env_constants = self.env_constants # shorten the name
         bag_o_fields = []
-        bag_o_fields.extend(env_constants.get_obstacle_functions())
+        # bag_o_fields.extend(env_constants.get_obstacle_functions())
         mytank = env_state.get_mytank(self.index)
         
         # get sensor update every second
@@ -199,10 +226,13 @@ class PFieldTank(Thread):
         #~ #if another tank on your team has a flag, that tank becomes a tangential field
         #~ #also, make sure that any flag that a teammate is carrying is no longer attractive
         for my_tank in env_state.mytanks:
-            if my_tank != mytank and my_tank.flag != "-":
+            if my_tank.flag != "-":
                 # flags_captured.append(my_tank.flag)
-                # bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
-                flags_not_captured.remove(my_tank.flag)
+                for flag in flags_not_captured:
+                    if flag.color == my_tank.flag:
+                        flags_not_captured.remove(flag)
+                if my_tank != mytank:
+                    bag_o_fields.append(make_tangential_function(my_tank.x, my_tank.y, env_constants.tanklength, 80, 1, 20))
 
 #~ 
         #~ #if an enemy tank has captured our flag, they become a priority
@@ -241,20 +271,34 @@ class PFieldTank(Thread):
         # bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
 
         if len(flags_not_captured) > 0:
-            goal = self.closest_object_in_a_list(mytank, flags_not_captured)
-            # goal = self.closest_flag(enemy_flags, mytank, flags_captured)
-        elif len(corners_not_yet_targeted) > 0:
-            goal = self.closest_corner(mytank, TeamManager.corners_not_yet_targeted)
-            TeamManager.corners_not_yet_targeted.remove(goal)
+            self.goal = self.closest_object_in_a_list(mytank, flags_not_captured)
         else:
-            goal = Answer()
-            goal.x = env_constants.worldsize / 2
-            goal.y = env_constants.worldsize / 2
+            if self.heading_towards_corner:
+                if compute_distance(mytank.x, self.goal.x, mytank.y, self.goal.y) < 90:
+                    self.heading_towards_corner = False
+            else:
+                self.goal = self.corners[random.randint(0, 3)]
+                self.heading_towards_corner = True
+            # self.goal.x = math.sqrt(env_constants.worldsize) / 2
+            # self.goal.y = math.sqrt(env_constants.worldsize) / 2 
+
+        # if len(flags_not_captured) > 0:
+        #     goal = self.closest_object_in_a_list(mytank, flags_not_captured)
+        #     # goal = self.closest_flag(enemy_flags, mytank, flags_captured)
+        # elif len(TeamManager.corners_not_yet_targeted) > 0:
+        #     goal = self.closest_corner(mytank, TeamManager.corners_not_yet_targeted)
+        #     TeamManager.corners_not_yet_targeted.remove(goal)
+        # else:
+        #     goal = Answer()
+        #     goal.x = env_constants.worldsize / 2
+        #     goal.y = env_constants.worldsize / 2
 
         cr = 2
         cs = 20
         a = 20
-        bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, cr, cs, a))
+        print self.goal.x
+        print self.goal.y
+        bag_o_fields.append(make_circle_attraction_function(self.goal.x, self.goal.y, cr, cs, a))
         
         def pfield_function(x, y):
             dx = 0
@@ -267,7 +311,7 @@ class PFieldTank(Thread):
         
         dx, dy = pfield_function(mytank.x, mytank.y)
 
-        self.move_to_position(mytank, my_tank.x + dx, my_tank.y + dy)
+        self.move_to_position(mytank, mytank.x + dx, mytank.y + dy)
         if self.graph:
             self.graph.add_function(pfield_function)
     
@@ -293,7 +337,7 @@ class PFieldTank(Thread):
         target_angle = math.atan2(target_y - tank.y,
                                   target_x - tank.x)
         relative_angle = self.normalize_angle(target_angle - tank.angle)
-        command = Command(tank.index, 1, 2 * relative_angle, True)
+        command = Command(tank.index, 1, relative_angle / 1.5, True)
         self.bzrc.do_commands([command])
 
     def normalize_angle(self, angle):
@@ -304,6 +348,19 @@ class PFieldTank(Thread):
         elif angle > math.pi:
             angle -= 2 * math.pi
         return angle
+
+# class Corners(object):
+
+#     @classmethod
+#     def init_corners_not_yet_targeted(cls, bzrc):
+#         cls.corners = []
+#         cls.lock = Lock()
+#         env_constants = bzrc.get_environment_constants()
+
+
+
+class Container(object):
+    pass
 
 def main():
     # Process CLI arguments.
@@ -320,6 +377,7 @@ def main():
     bzrc = BZRC(host, int(port))
 
     team = TeamManager(bzrc)
+    # Corners.init_corners_not_yet_targeted(bzrc)
     team.play()
 
 if __name__ == '__main__':
