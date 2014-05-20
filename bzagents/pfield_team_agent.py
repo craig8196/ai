@@ -438,8 +438,8 @@ class PFieldTank(Thread):
         self.get_unstuck(mytank.x, mytank.y, mytank.angle, env_constants.grid)
         bag_o_fields.extend(self.obstacle_functions)
 
-        self.avoid_staying_still_more_than_five_seconds(mytank.x, mytank.y, env_state.time_diff)
-        bag_o_fields.extend(self.staying_still)
+        # self.avoid_staying_still_more_than_five_seconds(mytank.x, mytank.y, env_state.time_diff)
+        # bag_o_fields.extend(self.staying_still)
 
         def pfield_function(x, y):
             dx = 0

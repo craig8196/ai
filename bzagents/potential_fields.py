@@ -50,7 +50,7 @@ def make_circle_repulsion_function(cx, cy, cr, cs, a):
         theta = math.atan2(ydiff, xdiff)
         
         if distance < cr:
-            return sys.maxint * -math.cos(theta), sys.maxint * -math.sin(theta)
+            return -math.cos(theta), -math.sin(theta)
         elif distance > cr + cs:
             return 0, 0
         else:
