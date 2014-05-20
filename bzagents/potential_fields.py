@@ -7,6 +7,7 @@ from __future__ import division
 import math
 import random
 import os
+import sys
 
 from numpy import linspace
 
@@ -49,14 +50,14 @@ def make_circle_repulsion_function(cx, cy, cr, cs, a):
         theta = math.atan2(ydiff, xdiff)
         
         if distance < cr:
-            return a * -math.cos(theta), a * -math.sin(theta)
-        elif distance > cs:
+            return sys.maxint * -math.cos(theta), sys.maxint * -math.sin(theta)
+        elif distance > cr + cs:
             return 0, 0
         else:
             max_dist = cs - cr
             dist_to_edge = cs - distance
-            dx = -(dist_to_edge/max_dist)*math.cos(theta)
-            dy = -(dist_to_edge/max_dist)*math.sin(theta)
+            dx = -(cs + cr - distance)*math.cos(theta)
+            dy = -(cs + cr - distance)*math.sin(theta)
             return a * dx, a * dy
     return circle_repulsion_field
 

@@ -137,6 +137,18 @@ class PFieldTank(Thread):
         self.exploration_destination = None
         self.next_explore_point = (0, 0)
         self.past_time_stamp = -1.0
+
+        self.staying_still_time_stamp = -1.0
+        self.staying_still_point = Container()
+        self.staying_still_point.x = 0
+        self.staying_still_point.y = 0
+        self.staying_still_point_set = False
+        self.staying_still = []
+
+        self.random_place = Container()
+        self.random_place.x = (random.randint(-self.env_constants.worldsize / 2, self.env_constants.worldsize / 2) + (76 * self.index)) % (env_constants.worldsize / 2)
+        self.random_place.y = (random.randint(-self.env_constants.worldsize / 2, self.env_constants.worldsize / 2) + (76 * self.index)) % (env_constants.worldsize / 2)
+
         self.past = []
         self.prev_x = 0
         self.prev_y = 0
@@ -300,7 +312,7 @@ class PFieldTank(Thread):
     
     def mark_where_ive_been(self, x, y, time_diff):
         if time_diff - self.past_time_stamp > 1.0:
-            self.past.append(make_circle_repulsion_function(x, y, 0, 100, 0.5))
+            self.past.append(make_circle_repulsion_function(x, y, 10, 100, 200))
             if len(self.past) > 10:
                 self.past.pop(0)
             self.past_time_stamp = time_diff
@@ -331,7 +343,29 @@ class PFieldTank(Thread):
     def get_unstuck(self, x, y, grid):
         if abs(self.prev_x - x) < 1 and abs(self.prev_y - y) < 1:
             xobs, yobs = self.get_obstacle_point(x, y, grid)
-            self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 0, 100, 0.7))
+            self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 10, 100, 200))
+
+    def check_random_place(self, x, y):
+        if compute_distance(x, self.random_place.x, y, self.random_place.y) < 50:
+            self.random_place.x = (random.randint(-self.env_constants.worldsize / 2, self.env_constants.worldsize / 2) + (76 * self.index)) % (self.env_constants.worldsize / 2)
+            self.random_place.y = (random.randint(-self.env_constants.worldsize / 2, self.env_constants.worldsize / 2) + (76 * self.index)) % (self.env_constants.worldsize / 2)
+
+    def distance_moved_since_last_stamp(self, x, y):
+        return compute_distance(x, self.staying_still_point.x, y, self.staying_still_point.y)
+
+    def avoid_staying_still_more_than_five_seconds(self, x, y, time_diff):
+        if time_diff - self.staying_still_time_stamp > 5.0:
+            if self.distance_moved_since_last_stamp(x, y) > 30:
+                self.staying_still_time_stamp = time_diff
+                self.staying_still_point_set = False
+                del self.staying_still[:]
+            else:
+                if not self.staying_still_point_set:
+                    self.staying_still_point.x = x
+                    self.staying_still_point.y = y
+                    self.staying_still_point_set = True
+                self.staying_still.append(make_circle_repulsion_function(self.staying_still_point.x, self.staying_still_point.y, 10, 80, 200))
+                print "staying still"
     
     def behave(self, env_state):
         """Create a behavior command based on potential fields given an environment state."""
@@ -345,7 +379,22 @@ class PFieldTank(Thread):
             self.last_sensor_poll = env_state.time_diff
             x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
             env_constants.grid.update(x, y, grid)
-        
+
+        flags_not_captured = self.env_state.enemyflags
+
+        for tank in self.env_state.mytanks:
+            if tank.flag != "-":
+                for flag in flags_not_captured:
+                    if flag.color == tank.flag:
+                        flags_not_captured.remove(flag)
+
+        # if len(flags_not_captured) > 0:
+        #     goal = self.closest_object_in_a_list(mytank, flags_not_captured)
+        #     bag_o_fields.append(make_circle_attraction_function(goal.x, goal.y, 0, 80, 3))
+        # else:
+            # self.check_random_place(mytank.x, mytank.y)
+            # bag_o_fields.append(make_circle_attraction_function(self.random_place.x, self.random_place.y, 0, 80, 5))
+            
         # should I explore?
         if self.should_explore(env_constants.grid):
             self.set_exploration_destination(mytank.x, mytank.y, env_constants.grid)
@@ -353,13 +402,16 @@ class PFieldTank(Thread):
             bag_o_fields.append(make_circle_attraction_function(x, y, 0, 80, 1.25))
         else:
             pass
-        
+
         self.mark_where_ive_been(mytank.x, mytank.y, env_state.time_diff)
         bag_o_fields.extend(self.past)
-        
+    
         self.get_unstuck(mytank.x, mytank.y, env_constants.grid)
         bag_o_fields.extend(self.obstacle_functions)
-        
+
+        self.avoid_staying_still_more_than_five_seconds(mytank.x, mytank.y, env_state.time_diff)
+        bag_o_fields.extend(self.staying_still)
+
         def pfield_function(x, y):
             dx = 0
             dy = 0
@@ -371,6 +423,11 @@ class PFieldTank(Thread):
         
         dx, dy = pfield_function(mytank.x, mytank.y)
 
+        if self.index == 0:
+            print "y"
+            print mytank.x
+            print "x"
+            print mytank.y
         self.move_to_position(mytank, mytank.x + dx, mytank.y + dy)
         if self.graph:
             self.graph.add_function(pfield_function)
