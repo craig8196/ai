@@ -107,7 +107,7 @@ class TeamManager(object):
         commands = []
         for tank in self.tanks:
             tank.signal_done_updating.wait()
-            #~ tank.behave(env_state)
+            tank.behave(env_state)
             commands.append(tank.command)
         self.bzrc.do_commands(commands)
         print "Updated "+str(time_diff)
@@ -303,8 +303,6 @@ class PFieldTank(Thread):
     
     def mark_where_ive_been(self, x, y, time_diff):
         if time_diff - self.past_time_stamp > 1.0:
-            self.past.append(make_circle_repulsion_function(x, y, 10, 100, 200))
-            if len(self.past) > 10:
             self.past.append(make_circle_repulsion_function(x, y, 0, 200, 1))
             if len(self.past) > 20:
                 self.past.pop(0)
@@ -405,13 +403,13 @@ class PFieldTank(Thread):
             x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
             env_constants.grid.update(x, y, grid)
 
-        flags_not_captured = self.env_state.enemyflags
+        # flags_not_captured = self.env_state.enemyflags
 
-        for tank in self.env_state.mytanks:
-            if tank.flag != "-":
-                for flag in flags_not_captured:
-                    if flag.color == tank.flag:
-                        flags_not_captured.remove(flag)
+        # for tank in self.env_state.mytanks:
+        #     if tank.flag != "-":
+        #         for flag in flags_not_captured:
+        #             if flag.color == tank.flag:
+        #                 flags_not_captured.remove(flag)
 
         # if len(flags_not_captured) > 0:
         #     goal = self.closest_object_in_a_list(mytank, flags_not_captured)
@@ -479,7 +477,7 @@ class PFieldTank(Thread):
         target_angle = math.atan2(target_y - tank.y,
                                   target_x - tank.x)
         relative_angle = self.normalize_angle(target_angle - tank.angle)
-        self.command = Command(tank.index, 1, 2 * relative_angle, True)
+        self.command = Command(tank.index, 1, 1.5 * relative_angle, True)
     
     
     def normalize_angle(self, angle):
