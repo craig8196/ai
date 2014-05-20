@@ -324,7 +324,7 @@ class PFieldTank(Thread):
             bag_o_fields.append(make_circle_attraction_function(x, y, 0, 100, 1.25))
             
             # get sensor update
-            if len(self.unknown_points) != 0 and env_state.time_diff - self.last_sensor_poll > 1.0:
+            if len(self.unknown_points) > 0 or env_state.time_diff - self.last_sensor_poll > 5.0:
                 self.last_sensor_poll = env_state.time_diff
                 x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
                 env_constants.grid.update(x, y, grid)
