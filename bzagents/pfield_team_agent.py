@@ -267,14 +267,20 @@ class PFieldTank(Thread):
                 ymax -= y + ymax - self.env_constants.worldsize
             
             count = 0
+            point_set = {}
             # find nearest unknown
             m = grid.obstacle_grid
             for i in xrange(0, xmax):
                 for j in xrange(0, ymax):
                     if m[x + i, y + j] == grid.UNKNOWN:
-                        self.exploration_destination = (x + i - self.env_constants.worldsize/2,
-                                                        y + j - self.env_constants.worldsize/2)
-                        return
+                        point_set[count] = (i, j)
+                        count += 1
+                        
+            if len(point_set) > 0:
+                i = random.randint(0, len(point_set)-1)
+                self.exploration_destination = (x + point_set[i][0] - self.env_constants.worldsize/2,
+                                                y + point_set[i][1] - self.env_constants.worldsize/2)
+                return
             
             # go towards an empty space
             #~ for i in xrange(0, xmax):
