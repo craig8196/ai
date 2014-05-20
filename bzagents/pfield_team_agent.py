@@ -206,94 +206,8 @@ class PFieldTank(Thread):
                 chosen_flag = flag 
         return chosen_flag
     
-    #~ def update_places(self, mytank, time_diff):
-        #~ if len(self.past_places) > 20:
-            #~ self.past_places.pop(0)
-            #~ self.past_places_functions
-    
-    def is_blind(self, x, y, grid):
-        x = int(x + self.env_constants.worldsize/2 - 50)
-        y = int(y + self.env_constants.worldsize/2 - 50)
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0
-        xmax = 90
-        ymax = 90
-        if x + xmax > self.env_constants.worldsize:
-            xmax -= x + xmax - self.env_constants.worldsize
-        if y + ymax > self.env_constants.worldsize:
-            ymax -= y + ymax - self.env_constants.worldsize
-        
-        count = 0
-        m = grid.obstacle_grid
-        for i in xrange(0, xmax):
-            for j in xrange(0, ymax):
-                if m[x + i, y + j] == grid.UNKNOWN:
-                    count +=1
-        
-        if count/(xmax*ymax) >= 0.1:
-            return True
-        else:
-            return False
-    
-    def should_explore(self, grid):
-        if not self.exploration_destination:
-            return True
-        if self.exploration_destination[0] == -1 and self.exploration_destination[1] == -1:
-            return False
-        else:
-            return True
-    
-    def set_exploration_destination(self, x, y, grid):
-        if self.exploration_destination:
-            xtemp, ytemp = self.exploration_destination
-            xtemp = int(xtemp + self.env_constants.worldsize/2 - 1)
-            ytemp = int(ytemp + self.env_constants.worldsize/2 - 1)
-            if grid.obstacle_grid[xtemp, ytemp] != grid.UNKNOWN:
-                self.exploration_destination = None
-        if not self.exploration_destination:
-            x = int(x + self.env_constants.worldsize/2 - 50)
-            y = int(y + self.env_constants.worldsize/2 - 50)
-            if x < 0:
-                x = 0
-            if y < 0:
-                y = 0
-            xmax = 90
-            ymax = 90
-            if x + xmax > self.env_constants.worldsize:
-                xmax -= x + xmax - self.env_constants.worldsize
-            if y + ymax > self.env_constants.worldsize:
-                ymax -= y + ymax - self.env_constants.worldsize
-            
-            count = 0
-            point_set = {}
-            # find nearest unknown
-            m = grid.obstacle_grid
-            for i in xrange(0, xmax):
-                for j in xrange(0, ymax):
-                    if m[x + i, y + j] == grid.UNKNOWN:
-                        point_set[count] = (i, j)
-                        count += 1
-                        
-            if len(point_set) > 0:
-                i = random.randint(0, len(point_set)-1)
-                self.exploration_destination = (x + point_set[i][0] - self.env_constants.worldsize/2,
-                                                y + point_set[i][1] - self.env_constants.worldsize/2)
-                return
-            
-            # go towards an empty space
-            #~ for i in xrange(0, xmax):
-                #~ for j in xrange(0, ymax):
-                    #~ if m[x + i, y + j] == grid.NOT_OBSTACLE:
-                        #~ self.exploration_destination = (x + i - self.env_constants.worldsize/2,
-                                                        #~ y + j - self.env_constants.worldsize/2)
-                        #~ return
-            
-            self.exploration_destination = (random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2),
-                                            random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2))
-    
-    
+    def should_explore(self):
+        return self.env_constants.grid.are_there_accessible_unknowns()
     
     def mark_where_ive_been(self, x, y, time_diff):
         if time_diff - self.past_time_stamp > 1.0:
@@ -302,33 +216,33 @@ class PFieldTank(Thread):
                 self.past.pop(0)
             self.past_time_stamp = time_diff
     
-    def get_obstacle_point(self, x, y, grid):
-        x = int(x + self.env_constants.worldsize/2 - 50)
-        y = int(y + self.env_constants.worldsize/2 - 50)
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0
-        xmax = 100
-        ymax = 100
-        if x + xmax > self.env_constants.worldsize:
-            xmax -= x + xmax - self.env_constants.worldsize
-        if y + ymax > self.env_constants.worldsize:
-            ymax -= y + ymax - self.env_constants.worldsize
-        
-        count = 0
-        # find an obstacle
-        m = grid.obstacle_grid
-        for i in xrange(0, xmax):
-            for j in xrange(0, ymax):
-                if m[x + i, y + j] == grid.OBSTACLE:
-                    return (x + i - self.env_constants.worldsize/2,
-                            y + j - self.env_constants.worldsize/2)
-        return (x, y)
+    #~ def get_obstacle_point(self, x, y, grid):
+        #~ x = int(x + self.env_constants.worldsize/2 - 50)
+        #~ y = int(y + self.env_constants.worldsize/2 - 50)
+        #~ if x < 0:
+            #~ x = 0
+        #~ if y < 0:
+            #~ y = 0
+        #~ xmax = 100
+        #~ ymax = 100
+        #~ if x + xmax > self.env_constants.worldsize:
+            #~ xmax -= x + xmax - self.env_constants.worldsize
+        #~ if y + ymax > self.env_constants.worldsize:
+            #~ ymax -= y + ymax - self.env_constants.worldsize
+        #~ 
+        #~ count = 0
+        #~ # find an obstacle
+        #~ m = grid.obstacle_grid
+        #~ for i in xrange(0, xmax):
+            #~ for j in xrange(0, ymax):
+                #~ if m[x + i, y + j] == grid.OBSTACLE:
+                    #~ return (x + i - self.env_constants.worldsize/2,
+                            #~ y + j - self.env_constants.worldsize/2)
+        #~ return (x, y)
     
     def get_unstuck(self, x, y, angle, grid):
         if abs(self.prev_x - x) < 0.2 and abs(self.prev_y - y) < 0.2:
-            xobs, yobs = self.find_point_in_front(x, y, angle, grid)
+            xobs, yobs = self.find_point_in_front()
             self.past = self.past[-2:]
             self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 1, 200, 4))
             self.obstacle_functions.append(make_tangential_function(xobs, yobs, 1, 50, 1, 4))
@@ -340,50 +254,82 @@ class PFieldTank(Thread):
         self.prev_x = x
         self.prev_y = y
     
-    def find_point_in_front(self, x, y, angle, grid):
-        dx = 2*self.env_constants.tanklength *math.cos(angle)
-        dy = 2*self.env_constants.tanklength *math.sin(angle)
-        newx = int(x + dx + self.env_constants.worldsize/2)
-        newy = int(y + dy + self.env_constants.worldsize/2)
-        if newx < 0:
-            newx = 0
-        if newy < 0:
-            newy = 0
-        xmax = 100
-        ymax = 100
-        if newx + xmax > self.env_constants.worldsize:
-            xmax -= newx + xmax - self.env_constants.worldsize
-        if newy + ymax > self.env_constants.worldsize:
-            ymax -= newy + ymax - self.env_constants.worldsize
-        m = grid.obstacle_grid
-        for i in xrange(0, xmax):
-                for j in xrange(0, ymax):
-                    if m[newx + i, newy + j] == grid.OBSTACLE:
-                        return (newx + i - self.env_constants.worldsize/2,
-                                newy + j - self.env_constants.worldsize/2)
-        return (x, y)
+    def find_point_in_front(self):
+        x = self.mytank.x
+        y = self.mytank.y
+        vx = self.mytank.vx
+        vy = self.mytank.vy
+        theta = math.atan2(vx, vy)
+        dx = 2*self.env_constants.tanklength *math.cos(theta)
+        dy = 2*self.env_constants.tanklength *math.sin(theta)
+        return x + dx, y + dy
+    
+    #~ def find_point_in_front(self, x, y, angle, grid):
+        #~ dx = 2*self.env_constants.tanklength *math.cos(angle)
+        #~ dy = 2*self.env_constants.tanklength *math.sin(angle)
+        #~ newx = int(x + dx + self.env_constants.worldsize/2)
+        #~ newy = int(y + dy + self.env_constants.worldsize/2)
+        #~ if newx < 0:
+            #~ newx = 0
+        #~ if newy < 0:
+            #~ newy = 0
+        #~ xmax = 100
+        #~ ymax = 100
+        #~ if newx + xmax > self.env_constants.worldsize:
+            #~ xmax -= newx + xmax - self.env_constants.worldsize
+        #~ if newy + ymax > self.env_constants.worldsize:
+            #~ ymax -= newy + ymax - self.env_constants.worldsize
+        #~ m = grid.obstacle_grid
+        #~ for i in xrange(0, xmax):
+                #~ for j in xrange(0, ymax):
+                    #~ if m[newx + i, newy + j] == grid.OBSTACLE:
+                        #~ return (newx + i - self.env_constants.worldsize/2,
+                                #~ newy + j - self.env_constants.worldsize/2)
+        #~ return (x, y)
         
+    def world_to_grid_coord(self, x, y):
+        worldsize = self.env_constants.worldsize
+        return int(x + worldsize/2), int(y + worldsize/2)
+    
+    def grid_to_world_coord(self, x, y):
+        worldsize = self.env_constants.worldsize
+        return x - worldsize/2, y - worldsize/2
     
     def behave(self, env_state):
         """Create a behavior command based on potential fields given an environment state."""
         env_constants = self.env_constants # shorten the name
         bag_o_fields = []
         bag_o_fields.extend(env_constants.get_obstacle_functions())
-        mytank = env_state.get_mytank(self.index)
-        
-        # get sensor update
-        if env_state.time_diff - self.last_sensor_poll > 5.0 or self.is_blind(mytank.x, mytank.y, env_constants.grid):
-            self.last_sensor_poll = env_state.time_diff
-            x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
-            env_constants.grid.update(x, y, grid)
+        self.mytank = env_state.get_mytank(self.index)
+        mytank = self.mytank
+        worldsize = self.env_constants.worldsize
         
         # should I explore?
-        if self.should_explore(env_constants.grid):
-            self.set_exploration_destination(mytank.x, mytank.y, env_constants.grid)
+        if self.should_explore():
+            should_get_new_destination = True
+            if self.exploration_destination:
+                x, y = self.exploration_destination
+                x, y = self.world_to_grid_coord(x, y)
+                if self.env_constants.grid.is_unknown(x, y):
+                    should_get_new_destination = False
+                
+            self.unknown_points = self.env_constants.grid.get_unknown_pointset(int(mytank.x + worldsize/2), int(mytank.y + worldsize/2), 70)
+            if should_get_new_destination:
+                if self.unknown_points:
+                    self.exploration_destination = self.unknown_points[random.randint(0, len(self.unknown_points)-1)]
+                else:
+                    self.exploration_destination = self.env_constants.grid.get_random_unknown_point()
+            
             x, y = self.exploration_destination
             bag_o_fields.append(make_circle_attraction_function(x, y, 0, 100, 1.25))
+            
+            # get sensor update
+            if len(self.unknown_points) != 0 and env_state.time_diff - self.last_sensor_poll > 1.0:
+                self.last_sensor_poll = env_state.time_diff
+                x, y, grid = self.bzrc.get_grid_as_matrix(self.index, env_constants.worldsize)
+                env_constants.grid.update(x, y, grid)
         else:
-            pass
+            pass # put other actions unrelated to exploration here
         
         self.mark_where_ive_been(mytank.x, mytank.y, env_state.time_diff)
         bag_o_fields.extend(self.past)
