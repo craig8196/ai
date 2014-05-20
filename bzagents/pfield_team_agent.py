@@ -291,8 +291,8 @@ class PFieldTank(Thread):
     
     def mark_where_ive_been(self, x, y, time_diff):
         if time_diff - self.past_time_stamp > 1.0:
-            self.past.append(make_circle_repulsion_function(x, y, 0, 100, 0.5))
-            if len(self.past) > 10:
+            self.past.append(make_circle_repulsion_function(x, y, 0, 200, 1))
+            if len(self.past) > 20:
                 self.past.pop(0)
             self.past_time_stamp = time_diff
     
@@ -321,11 +321,14 @@ class PFieldTank(Thread):
         return (x, y)
     
     def get_unstuck(self, x, y, angle, grid):
-        if abs(self.prev_x - x) < 0.25 and abs(self.prev_y - y) < 0.25:
+        if abs(self.prev_x - x) < 0.2 and abs(self.prev_y - y) < 0.2:
             xobs, yobs = self.find_point_in_front(x, y, angle, grid)
-            print x, y, xobs, yobs, angle
+            self.past = self.past[-2:]
             self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 1, 200, 4))
             self.obstacle_functions.append(make_tangential_function(xobs, yobs, 1, 50, 1, 4))
+            if len(self.obstacle_functions) > 20:
+                self.obstacle_functions.pop(0)
+                self.obstacle_functions.pop(0)
             self.exploration_destination = (random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2),
                                             random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2))
         self.prev_x = x
