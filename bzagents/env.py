@@ -48,7 +48,7 @@ class EnvironmentConstants(object):
         self.alive = constants['tankalive']
         self.dead = constants['tankdead']
         self.color = constants['team']
-        self.tanklength = constants['tanklength']
+        self.tanklength = int(constants['tanklength'])
         if 'truepositive' in constants:
             self.truepositive = float(constants['truepositive'])
         else:

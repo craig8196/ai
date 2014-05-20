@@ -260,8 +260,8 @@ class PFieldTank(Thread):
     def set_exploration_destination(self, x, y, grid):
         if self.exploration_destination:
             xtemp, ytemp = self.exploration_destination
-            xtemp = int(xtemp + self.env_constants.worldsize/2)
-            ytemp = int(ytemp + self.env_constants.worldsize/2)
+            xtemp = int(xtemp + self.env_constants.worldsize/2 - 1)
+            ytemp = int(ytemp + self.env_constants.worldsize/2 - 1)
             if grid.obstacle_grid[xtemp, ytemp] != grid.UNKNOWN:
                 self.exploration_destination = None
         if not self.exploration_destination:
@@ -289,24 +289,15 @@ class PFieldTank(Thread):
                         return
             
             # go towards an empty space
-            for i in xrange(0, xmax):
-                for j in xrange(0, ymax):
-                    if m[x + i, y + j] == grid.NOT_OBSTACLE:
-                        self.exploration_destination = (x + i - self.env_constants.worldsize/2,
-                                                        y + j - self.env_constants.worldsize/2)
-                        return
+            #~ for i in xrange(0, xmax):
+                #~ for j in xrange(0, ymax):
+                    #~ if m[x + i, y + j] == grid.NOT_OBSTACLE:
+                        #~ self.exploration_destination = (x + i - self.env_constants.worldsize/2,
+                                                        #~ y + j - self.env_constants.worldsize/2)
+                        #~ return
             
-            # find an unknown pixel
-            i_start = self.next_explore_point[0]
-            for i in xrange(i_start, self.env_constants.worldsize):
-                for j in xrange(0, self.env_constants.worldsize):
-                    if m[i, j] == grid.UNKNOWN:
-                        self.exploration_destination = (i - self.env_constants.worldsize/2,
-                                                   j - self.env_constants.worldsize/2)
-                        self.next_explore_point = (i, j)
-                        return
-            
-            self.exploration_destination = (-1, -1)
+            self.exploration_destination = (random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2),
+                                            random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2))
     
     
     
@@ -314,6 +305,8 @@ class PFieldTank(Thread):
         if time_diff - self.past_time_stamp > 1.0:
             self.past.append(make_circle_repulsion_function(x, y, 10, 100, 200))
             if len(self.past) > 10:
+            self.past.append(make_circle_repulsion_function(x, y, 0, 200, 1))
+            if len(self.past) > 20:
                 self.past.pop(0)
             self.past_time_stamp = time_diff
     
@@ -332,18 +325,14 @@ class PFieldTank(Thread):
             ymax -= y + ymax - self.env_constants.worldsize
         
         count = 0
-        # find nearest obstacle
+        # find an obstacle
         m = grid.obstacle_grid
         for i in xrange(0, xmax):
             for j in xrange(0, ymax):
                 if m[x + i, y + j] == grid.OBSTACLE:
                     return (x + i - self.env_constants.worldsize/2,
                             y + j - self.env_constants.worldsize/2)
-    
-    def get_unstuck(self, x, y, grid):
-        if abs(self.prev_x - x) < 1 and abs(self.prev_y - y) < 1:
-            xobs, yobs = self.get_obstacle_point(x, y, grid)
-            self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 10, 100, 200))
+        return (x, y)
 
     def check_random_place(self, x, y):
         if compute_distance(x, self.random_place.x, y, self.random_place.y) < 50:
@@ -365,7 +354,43 @@ class PFieldTank(Thread):
                     self.staying_still_point.y = y
                     self.staying_still_point_set = True
                 self.staying_still.append(make_circle_repulsion_function(self.staying_still_point.x, self.staying_still_point.y, 10, 80, 200))
-                print "staying still"
+                
+    def get_unstuck(self, x, y, angle, grid):
+        if abs(self.prev_x - x) < 0.2 and abs(self.prev_y - y) < 0.2:
+            xobs, yobs = self.find_point_in_front(x, y, angle, grid)
+            self.past = self.past[-2:]
+            self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 1, 200, 4))
+            self.obstacle_functions.append(make_tangential_function(xobs, yobs, 1, 50, 1, 4))
+            if len(self.obstacle_functions) > 20:
+                self.obstacle_functions.pop(0)
+                self.obstacle_functions.pop(0)
+            self.exploration_destination = (random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2),
+                                            random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2))
+        self.prev_x = x
+        self.prev_y = y
+    
+    def find_point_in_front(self, x, y, angle, grid):
+        dx = 2*self.env_constants.tanklength *math.cos(angle)
+        dy = 2*self.env_constants.tanklength *math.sin(angle)
+        newx = int(x + dx + self.env_constants.worldsize/2)
+        newy = int(y + dy + self.env_constants.worldsize/2)
+        if newx < 0:
+            newx = 0
+        if newy < 0:
+            newy = 0
+        xmax = 100
+        ymax = 100
+        if newx + xmax > self.env_constants.worldsize:
+            xmax -= newx + xmax - self.env_constants.worldsize
+        if newy + ymax > self.env_constants.worldsize:
+            ymax -= newy + ymax - self.env_constants.worldsize
+        m = grid.obstacle_grid
+        for i in xrange(0, xmax):
+                for j in xrange(0, ymax):
+                    if m[newx + i, newy + j] == grid.OBSTACLE:
+                        return (newx + i - self.env_constants.worldsize/2,
+                                newy + j - self.env_constants.worldsize/2)
+        return (x, y)
     
     def behave(self, env_state):
         """Create a behavior command based on potential fields given an environment state."""
@@ -399,14 +424,14 @@ class PFieldTank(Thread):
         if self.should_explore(env_constants.grid):
             self.set_exploration_destination(mytank.x, mytank.y, env_constants.grid)
             x, y = self.exploration_destination
-            bag_o_fields.append(make_circle_attraction_function(x, y, 0, 80, 1.25))
+            bag_o_fields.append(make_circle_attraction_function(x, y, 0, 100, 1.25))
         else:
             pass
 
         self.mark_where_ive_been(mytank.x, mytank.y, env_state.time_diff)
         bag_o_fields.extend(self.past)
-    
-        self.get_unstuck(mytank.x, mytank.y, env_constants.grid)
+        
+        self.get_unstuck(mytank.x, mytank.y, mytank.angle, env_constants.grid)
         bag_o_fields.extend(self.obstacle_functions)
 
         self.avoid_staying_still_more_than_five_seconds(mytank.x, mytank.y, env_state.time_diff)
