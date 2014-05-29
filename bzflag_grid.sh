@@ -1,1 +1,1 @@
-./bin/bzrflag --world=maps/four_ls.bzw --friendly-fire --red-port=50100 --green-port=50101 --purple-port=50102 --blue-port=50103 --default-true-positive=.97 --default-true-negative=.9 --occgrid-width=100 --no-report-obstacles --default-tanks=5
+./bin/bzrflag --world=maps/four_ls.bzw --friendly-fire --red-port=50100 --green-port=50101 --purple-port=50102 --blue-port=50103 --default-true-positive=.97 --default-true-negative=.9 --occgrid-width=100 --no-report-obstacles --default-tanks=8
