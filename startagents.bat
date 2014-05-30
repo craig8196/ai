@@ -1,1 +1,1 @@
-python bzagents/pfield_team_agent.py localhost 50102
+python bzagents/wild_agent.py localhost 50102
