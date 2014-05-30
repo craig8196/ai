@@ -9,6 +9,8 @@ import numpy
 from numpy import zeros
 from threading import Thread, Lock, Event
 import time
+from utilities import ThreadSafeQueue
+import random
 
 
 class ObstacleVisualization(Thread):
@@ -71,40 +73,115 @@ class ObstacleVisualization(Thread):
         glutIdleFunc(self.on_idle)
         glutMainLoop()
 
-class Grid(object):
+class Grid(Thread):
     INITIAL_OBSTACLE_PROBABILITY = 0.95
-    DEFAULT_TRUE_POSITIVE = 0.97
-    DEFAULT_TRUE_NEGATIVE = 0.9
+    DEFAULT_TRUE_POSITIVE = 0.25
+    DEFAULT_TRUE_NEGATIVE = 0.25
     OBSTACLE = 1
     NOT_OBSTACLE = 0
     UNKNOWN = 0.5
     
     def __init__(self, width, height):
+        super(Grid, self).__init__()
         self.grid = numpy.empty((width, height))
         self.grid[:] = Grid.INITIAL_OBSTACLE_PROBABILITY
         self.obstacle_grid = numpy.empty((width, height))
-        self.obstacle_grid[:] = 0.5
+        self.obstacle_grid[:] = Grid.UNKNOWN
+        self.accessible_unknowns = [(0, 0)]
         self.set_true_positive(Grid.DEFAULT_TRUE_POSITIVE)
         self.set_true_negative(Grid.DEFAULT_TRUE_NEGATIVE)
         self.update_thresholds()
         self.events = []
-        self.unexplored_percentage = 1
-        self.last_unexplored_update = time.time()
-        self.unexplored_update = 10.0 # number of seconds before we refresh the percentage
         
         self.vis = ObstacleVisualization(width, height)
         self.add_update_event(self.vis.updated)
         self.vis.set_external_grid(self)
         self.vis.start()
         
-    def get_unexplored_point(self):
-        (i_len, j_len) = self.grid.shape
+        self.unknowns_update_frequency = 20.0 # number of seconds before we refresh
+        self.lock = Lock()
+        self.grids_to_update = ThreadSafeQueue()
         
-        for i in xrange(0, i_len):
-            for j in xrange(0, j_len):
-                if self.obstacle_grid[i, j] == self.UNKNOWN:
-                    return i, j
-        return 0, 0
+        self.unknowns_updater = Thread(target=self.run_updater)
+        self.unknowns_updater.start()
+        self.start()
+    
+    def run_updater(self):
+        time.sleep(self.unknowns_update_frequency)
+        self.update_unknowns()
+    
+    def run(self):
+        x, y, mini_grid = self.grids_to_update.remove()
+        self.update(x, y, mini_grid)
+    
+    def is_unknown(self, x, y):
+        x = int(x)
+        y = int(y)
+        xlen, ylen = self.obstacle_grid.shape
+        if x < 0 or y < 0 or x >= xlen or y >= ylen:
+            return False
+        if self.obstacle_grid[x, y] == Grid.UNKNOWN:
+            return True
+        return False
+    
+    def update_unknowns(self):
+        self.lock.acquire()
+        if self.accessible_unknowns != None:
+            (i_len, j_len) = self.grid.shape
+            self.accessible_unknowns = []
+            for i in xrange(1, i_len-1):
+                for j in xrange(1, j_len-1):
+                    if self.obstacle_grid[i][j] == Grid.UNKNOWN:
+                        if self.obstacle_grid[i-1][j] == Grid.NOT_OBSTACLE or \
+                           self.obstacle_grid[i+1][j] == Grid.NOT_OBSTACLE or \
+                           self.obstacle_grid[i][j-1] == Grid.NOT_OBSTACLE or \
+                           self.obstacle_grid[i][j+1] == Grid.NOT_OBSTACLE:
+                            self.accessible_unknowns.append((i,j))
+            print "Remaining points to get: " + str(len(self.accessible_unknowns))
+            if len(self.accessible_unknowns) == 0:
+                self.accessible_unknowns = None
+        self.lock.release()
+    
+    def are_there_accessible_unknowns(self):
+        if self.accessible_unknowns == None:
+            return False
+        return True
+    
+    def get_random_unknown_point(self):
+        l = self.accessible_unknowns
+        if l == None or len(l) == 0:
+            return (-1, -1)
+        else:
+            return l[random.randint(0, len(l) - 1)]
+    
+    def get_unknown_pointset(self, x, y, size=100):
+        """x and y are integers"""
+        xlen, ylen = self.obstacle_grid.shape
+        xmax = size
+        ymax = size
+        x = x - int(xmax/2)
+        y = y - int(ymax/2)
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0
+        if x >= xlen:
+            x = xlen - 1
+        if y >= ylen:
+            y = ylen - 1
+        if x + xmax > xlen:
+            xmax -= x + xmax - xlen
+        if y + ymax > ylen:
+            ymax -= y + ymax - ylen
+        
+        point_set = []
+        # find unknowns
+        for i in xrange(0, xmax):
+            for j in xrange(0, ymax):
+                if self.obstacle_grid[x + i, y + j] == Grid.UNKNOWN:
+                    point_set.append((i, j))
+        
+        return point_set
     
     def update_thresholds(self):
         self.obstacle_threshold = self.cond_prob_obstacle_obstacle + (1 - self.cond_prob_obstacle_obstacle)/2# any probability above this is considered an obstacle
@@ -140,7 +217,10 @@ class Grid(object):
         self.cond_prob_obstacle_not_obstacle = 1 - self.cond_prob_not_obstacle_not_obstacle
     
     def update_cell(self, i, j, observation):
+        # WARNING: helper function to update() do not acquire locks
+        # update new probability
         self.grid[i, j] = self.calculate_conditional_probability(self.grid[i, j], observation)
+        # update obstacle_grid
         if self.grid[i, j] < self.not_obstacle_threshold:
             self.obstacle_grid[i, j] = self.NOT_OBSTACLE
         elif self.grid[i, j] > self.obstacle_threshold:
@@ -163,9 +243,6 @@ class Grid(object):
         else:
             return prob_state_is_obstacle # no observation, return previous state
     
-    def get_item(self, x, y):
-        return self.grid[x, y]
-    
     def get_value(self, x, y):
         return self.grid[x, y]
     
@@ -183,23 +260,14 @@ class Grid(object):
             self.unexplored_percentage = count/(xlen*ylen)
             print "Unexplored percentage: " + str(self.unexplored_percentage)
     
-    #~ def is_explored(self):
-        #~ if self.explored:
-            #~ return True
-        #~ else:
-            #~ self.last_explored_point
-            #~ xlen, ylen = self.grid.shape
-            #~ count = 0
-            #~ for i in xrange(0, xlen):
-                #~ for j in xrange(0, ylen):
-                    #~ if self.obstacle_grid[i, j] == self.UNKNOWN:
-                        #~ count += 1
+    def add_grid_update(self, x, y, mini_grid):
+        self.grids_to_update.add((x, y, mini_grid))
     
-    #to be called in the tick method.
     def update(self, corner_x, corner_y, mini_grid):
         """mini_grid is a numpy matrix of ones and zeros
         The corner is the starting corner in the map when rotated correctly.
         """
+        self.lock.acquire()
         (i_len, j_len) = mini_grid.shape
         
         for i in xrange(0, i_len):
@@ -207,7 +275,7 @@ class Grid(object):
                 self.update_cell(i + corner_x, j + corner_y, mini_grid[i, j])
         
         self.notify_update_event()
-        #~ self.update_unexplored_percentage()
+        self.lock.release()
 
 if __name__ == "__main__":
     ov = ObstacleVisualization(800, 800)
