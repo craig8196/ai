@@ -11,6 +11,7 @@ from threading import Thread, Lock, Event
 import time
 from utilities import ThreadSafeQueue
 import random
+import os
 
 
 class ObstacleVisualization(Thread):
@@ -107,8 +108,13 @@ class Grid(Thread):
         self.start()
     
     def run_updater(self):
-        time.sleep(self.unknowns_update_frequency)
-        self.update_unknowns()
+        try:
+            while True:
+                time.sleep(self.unknowns_update_frequency)
+                self.update_unknowns()
+        except Exception as e:
+            print e
+            os._exit(0)
     
     def run(self):
         x, y, mini_grid = self.grids_to_update.remove()
@@ -184,8 +190,8 @@ class Grid(Thread):
         return point_set
     
     def update_thresholds(self):
-        self.obstacle_threshold = self.cond_prob_obstacle_obstacle + (1 - self.cond_prob_obstacle_obstacle)/2# any probability above this is considered an obstacle
-        self.not_obstacle_threshold = self.cond_prob_obstacle_not_obstacle - self.cond_prob_obstacle_not_obstacle/2 # any probability below this is considered to not be an obstacle
+        self.obstacle_threshold = self.cond_prob_obstacle_obstacle # any probability above this is considered an obstacle
+        self.not_obstacle_threshold = self.cond_prob_obstacle_not_obstacle # any probability below this is considered to not be an obstacle
         if self.obstacle_threshold < self.not_obstacle_threshold:
             temp = self.not_obstacle_threshold
             self.not_obstacle_threshold = self.obstacle_threshold
@@ -217,7 +223,7 @@ class Grid(Thread):
         self.cond_prob_obstacle_not_obstacle = 1 - self.cond_prob_not_obstacle_not_obstacle
     
     def update_cell(self, i, j, observation):
-        # WARNING: helper function to update() do not acquire locks
+        # WARNING: helper function to update() do NOT acquire locks
         # update new probability
         self.grid[i, j] = self.calculate_conditional_probability(self.grid[i, j], observation)
         # update obstacle_grid

@@ -226,46 +226,20 @@ class PFieldTank(Thread):
     
     def mark_where_ive_been(self, x, y, time_diff):
         if time_diff - self.past_time_stamp > 1.0:
-            self.past.append(make_circle_repulsion_function(x, y, 0, 200, 1))
+            self.past.append(make_circle_repulsion_function(x, y, 0, 100, 2))
             if len(self.past) > 20:
                 self.past.pop(0)
             self.past_time_stamp = time_diff
-    
-    #~ def get_obstacle_point(self, x, y, grid):
-        #~ x = int(x + self.env_constants.worldsize/2 - 50)
-        #~ y = int(y + self.env_constants.worldsize/2 - 50)
-        #~ if x < 0:
-            #~ x = 0
-        #~ if y < 0:
-            #~ y = 0
-        #~ xmax = 100
-        #~ ymax = 100
-        #~ if x + xmax > self.env_constants.worldsize:
-            #~ xmax -= x + xmax - self.env_constants.worldsize
-        #~ if y + ymax > self.env_constants.worldsize:
-            #~ ymax -= y + ymax - self.env_constants.worldsize
-        #~ 
-        #~ count = 0
-        #~ # find an obstacle
-        #~ m = grid.obstacle_grid
-        #~ for i in xrange(0, xmax):
-            #~ for j in xrange(0, ymax):
-                #~ if m[x + i, y + j] == grid.OBSTACLE:
-                    #~ return (x + i - self.env_constants.worldsize/2,
-                            #~ y + j - self.env_constants.worldsize/2)
-        #~ return (x, y)
     
     def get_unstuck(self, x, y, angle, grid):
         if abs(self.prev_x - x) < 0.2 and abs(self.prev_y - y) < 0.2:
             xobs, yobs = self.find_point_in_front()
             self.past = self.past[-2:]
-            self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 1, 200, 4))
-            self.obstacle_functions.append(make_tangential_function(xobs, yobs, 1, 50, 1, 4))
+            self.obstacle_functions.append(make_circle_repulsion_function(xobs, yobs, 1, 100, 5))
+            #~ self.obstacle_functions.append(make_tangential_function(xobs, yobs, 1, 50, 1, 4))
             if len(self.obstacle_functions) > 20:
                 self.obstacle_functions.pop(0)
-                self.obstacle_functions.pop(0)
-            self.exploration_destination = (random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2),
-                                            random.randint(-self.env_constants.worldsize/2, self.env_constants.worldsize/2))
+                #~ self.obstacle_functions.pop(0)
         self.prev_x = x
         self.prev_y = y
     
@@ -275,8 +249,8 @@ class PFieldTank(Thread):
         vx = self.mytank.vx
         vy = self.mytank.vy
         theta = math.atan2(vx, vy)
-        dx = 2*self.env_constants.tanklength *math.cos(theta)
-        dy = 2*self.env_constants.tanklength *math.sin(theta)
+        dx = self.env_constants.tanklength *math.cos(theta)
+        dy = self.env_constants.tanklength *math.sin(theta)
         return x + dx, y + dy
     
     #~ def find_point_in_front(self, x, y, angle, grid):
@@ -321,6 +295,7 @@ class PFieldTank(Thread):
         
         # should I explore?
         if self.should_explore():
+            # check for goal validity
             should_get_new_destination = True
             if self.exploration_destination:
                 x, y = self.exploration_destination
@@ -328,15 +303,18 @@ class PFieldTank(Thread):
                 if self.env_constants.grid.is_unknown(x, y):
                     should_get_new_destination = False
                 
+            # set a new goal if needed
             self.unknown_points = self.env_constants.grid.get_unknown_pointset(int(mytank.x + worldsize/2), int(mytank.y + worldsize/2), 70)
             if should_get_new_destination:
                 if self.unknown_points:
-                    self.exploration_destination = self.unknown_points[random.randint(0, len(self.unknown_points)-1)]
+                    i, j = self.unknown_points[random.randint(0, len(self.unknown_points)-1)]
+                    self.exploration_destination = self.grid_to_world_coord(i, j)
                 else:
-                    self.exploration_destination = self.env_constants.grid.get_random_unknown_point()
+                    i, j = self.env_constants.grid.get_random_unknown_point()
+                    self.exploration_destination = self.grid_to_world_coord(i, j)
             
             x, y = self.exploration_destination
-            bag_o_fields.append(make_circle_attraction_function(x, y, 0, 100, 1.25))
+            bag_o_fields.append(make_circle_attraction_function(x, y, 0, 100, 1.75))
             
             # get sensor update
             if len(self.unknown_points) > 0 or env_state.time_diff - self.last_sensor_poll > 5.0:
