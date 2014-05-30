@@ -1,0 +1,1065 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"defaul",
+				"default-true-negative"
+			],
+			[
+				"env",
+				"env_constants"
+			],
+			[
+				"en",
+				"env_constants"
+			],
+			[
+				"random",
+				"random_place"
+			],
+			[
+				"clos",
+				"closest_object_in_a_list"
+			],
+			[
+				"stay",
+				"staying_still"
+			],
+			[
+				"sta",
+				"staying_still_point"
+			],
+			[
+				"st",
+				"staying_still_point"
+			],
+			[
+				"staying",
+				"staying_still_point_set"
+			],
+			[
+				"aoid",
+				"avoid_staying_still_more_than_five_seconds"
+			],
+			[
+				"time",
+				"time_diff"
+			],
+			[
+				"sty",
+				"staying_still_point_set"
+			],
+			[
+				"dista",
+				"distance_moved_since_last_stamp"
+			],
+			[
+				"co",
+				"corners"
+			],
+			[
+				"get",
+				"get_environment_constants"
+			],
+			[
+				"close",
+				"closest_object_in_a_list"
+			],
+			[
+				"Con",
+				"Container"
+			],
+			[
+				"flags",
+				"flags_not_captured"
+			],
+			[
+				"target",
+				"target_angle"
+			],
+			[
+				"chose",
+				"chosen_object"
+			],
+			[
+				"closest",
+				"closest_dist"
+			],
+			[
+				"class",
+				"classmethod"
+			],
+			[
+				"corner",
+				"corners_not_yet_targeted"
+			],
+			[
+				"prob",
+				"prob_true_negative"
+			],
+			[
+				"uncon",
+				"unconditional_probability"
+			],
+			[
+				"pro",
+				"prob_true_negative"
+			],
+			[
+				"is",
+				"is_occupied"
+			],
+			[
+				"update",
+				"update_conditional_prob"
+			],
+			[
+				"calcu",
+				"calculate_observational_probability"
+			],
+			[
+				"calcula",
+				"calculate_conditional_probability"
+			],
+			[
+				"probab",
+				"probability_given_occupied"
+			],
+			[
+				"probability",
+				"probability_given_not_occupied"
+			],
+			[
+				"to",
+				"total_read"
+			],
+			[
+				"tot",
+				"total_hits"
+			],
+			[
+				"con",
+				"conditional_probability"
+			],
+			[
+				"dist_",
+				"dist_goal2"
+			],
+			[
+				"dist_goal",
+				"dist_goal1"
+			],
+			[
+				"ge",
+				"get_obstacle_center_and_radius"
+			],
+			[
+				"y",
+				"y_average"
+			],
+			[
+				"be",
+				"behave"
+			],
+			[
+				"tanks",
+				"tanks_to_protect"
+			],
+			[
+				"tank",
+				"tanklength"
+			],
+			[
+				"my",
+				"my_tank"
+			],
+			[
+				"D",
+				"DumbTank"
+			],
+			[
+				"enemy",
+				"enemy_flags"
+			],
+			[
+				"comput",
+				"compute_distance"
+			],
+			[
+				"combined",
+				"combined_field1"
+			],
+			[
+				"u",
+				"update_tank"
+			],
+			[
+				"changein",
+				"changein_y"
+			],
+			[
+				"cha",
+				"changein_x"
+			],
+			[
+				"tan",
+				"tank_x"
+			],
+			[
+				"compute",
+				"compute_angle"
+			],
+			[
+				"el",
+				"elif"
+			],
+			[
+				"in",
+				"inner_radius"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "bzagents/agent0.py",
+			"settings":
+			{
+				"buffer_size": 3850,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/fields.py",
+			"settings":
+			{
+				"buffer_size": 5481,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/fields_exp.py",
+			"settings":
+			{
+				"buffer_size": 10881,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "run_game.bat",
+			"settings":
+			{
+				"buffer_size": 240,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "run_grid.bat",
+			"settings":
+			{
+				"buffer_size": 346,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "startagents.bat",
+			"settings":
+			{
+				"buffer_size": 52,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/pfield_agent.py",
+			"settings":
+			{
+				"buffer_size": 14177,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/bzrc.py",
+			"settings":
+			{
+				"buffer_size": 17345,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/smart_agent.py",
+			"settings":
+			{
+				"buffer_size": 5893,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/ry_dumb_agent.py",
+			"settings":
+			{
+				"buffer_size": 3999,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/craig_dumb_agent.py",
+			"settings":
+			{
+				"buffer_size": 6429,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/grid.py",
+			"settings":
+			{
+				"buffer_size": 10808,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"contents": "11524376\n\nwww.intel.com/employee/leavingintel/index.htm",
+			"settings":
+			{
+				"buffer_size": 55,
+				"line_ending": "Windows",
+				"name": "11524376"
+			}
+		},
+		{
+			"file": "bzagents/pfield_team_agent.py",
+			"settings":
+			{
+				"buffer_size": 15703,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/bzui.py",
+			"settings":
+			{
+				"buffer_size": 5278,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/Python27/Lib/site-packages/OpenGL/GLUT/special.py",
+			"settings":
+			{
+				"buffer_size": 13715,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "bzagents/env.py",
+			"settings":
+			{
+				"buffer_size": 3045,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/potential_fields.py",
+			"settings":
+			{
+				"buffer_size": 2846,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+			[
+				"in",
+				"Indentation: Convert to Spaces"
+			]
+		],
+		"width": 392.0
+	},
+	"console":
+	{
+		"height": 125.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/C/Users/William/Downloads/identity-verification-form.pdf",
+		"/C/Python27/Lib/site-packages/OpenGL/GLUT/special.py",
+		"/C/Python27/Lib/importlib/__init__.py",
+		"/C/BZRFlag/bzrflag_git/ai/bzagents/potential_fields.py",
+		"/C/Users/William/AppData/Roaming/Sublime Text 2/Packages/User/Distraction Free.sublime-settings",
+		"/C/BZRFlag/bzrflag_git/ai/run_game.bat",
+		"/C/BZRFlag/bzrflag_git/ai/bzagents/gnuplot_fields/circle_attractive_field.gpi"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"cond_prob_obstacle_not_obstacle",
+			"cond_prob_obstacle_obstacle",
+			"set_true_positive",
+			"update_thresholds",
+			"calculate_conditional_probability",
+			"head",
+			"corners_not_yet_targeted",
+			"my_tank",
+			"env_state",
+			"bag_o_fields",
+			"ObstacleVisualization",
+			"set_true_positive",
+			"obstacles",
+			"got",
+			"agent0",
+			"closest_flag",
+			"circle_repulsion_field",
+			"bob",
+			"minimum",
+			"read_arr",
+			"tank.flag",
+			"make_circle_repulsion_function",
+			"basic_circle_attraction_field",
+			"read_bool",
+			"command",
+			"flag",
+			"            return [a * self.field_radius * math.cos(angle), a * self.field_radius * math.sin(angle), angle] ",
+			"flags\n",
+			"flags\n        else:\n",
+			"\n        else:\n",
+			"get_lots"
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 11,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "bzagents/agent0.py",
+					"settings":
+					{
+						"buffer_size": 3850,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1362,
+								1362
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 317.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "bzagents/fields.py",
+					"settings":
+					{
+						"buffer_size": 5481,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "bzagents/fields_exp.py",
+					"settings":
+					{
+						"buffer_size": 10881,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "run_game.bat",
+					"settings":
+					{
+						"buffer_size": 240,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								240,
+								240
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Batch File/Batch File.tmLanguage"
+						},
+						"translation.x": 492.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "run_grid.bat",
+					"settings":
+					{
+						"buffer_size": 346,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								346,
+								346
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Batch File/Batch File.tmLanguage"
+						},
+						"translation.x": 1234.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "startagents.bat",
+					"settings":
+					{
+						"buffer_size": 52,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Batch File/Batch File.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "bzagents/pfield_agent.py",
+					"settings":
+					{
+						"buffer_size": 14177,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								9137,
+								9137
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3007.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "bzagents/bzrc.py",
+					"settings":
+					{
+						"buffer_size": 17345,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 6304.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "bzagents/smart_agent.py",
+					"settings":
+					{
+						"buffer_size": 5893,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2609,
+								2609
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 336.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "bzagents/ry_dumb_agent.py",
+					"settings":
+					{
+						"buffer_size": 3999,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2138,
+								2138
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 368.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "bzagents/craig_dumb_agent.py",
+					"settings":
+					{
+						"buffer_size": 6429,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5419,
+								5419
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2154.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "bzagents/grid.py",
+					"settings":
+					{
+						"buffer_size": 10808,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								10519,
+								10519
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"settings":
+					{
+						"buffer_size": 55,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								55,
+								55
+							]
+						],
+						"settings":
+						{
+							"auto_name": "11524376",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "bzagents/pfield_team_agent.py",
+					"settings":
+					{
+						"buffer_size": 15703,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3418,
+								3418
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 739.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "bzagents/bzui.py",
+					"settings":
+					{
+						"buffer_size": 5278,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "/C/Python27/Lib/site-packages/OpenGL/GLUT/special.py",
+					"settings":
+					{
+						"buffer_size": 13715,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								10886,
+								10886
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 339.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "bzagents/env.py",
+					"settings":
+					{
+						"buffer_size": 3045,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "bzagents/potential_fields.py",
+					"settings":
+					{
+						"buffer_size": 2846,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2278,
+								2278
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 553.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"replace":
+	{
+		"height": 0.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"poy",
+				"bzagents/potential_fields.py"
+			],
+			[
+				"env",
+				"bzagents/env.py"
+			],
+			[
+				"gui",
+				"bzagents/bzui.py"
+			],
+			[
+				"",
+				"bzagents/pfield_team_agent.py"
+			],
+			[
+				"pf",
+				"pfield_team_agent.py"
+			],
+			[
+				"po",
+				"/C/BZRFlag/bzrflag_git/ai/bzagents/potential_fields.py"
+			],
+			[
+				"p",
+				"/C/BZRFlag/bzrflag_git/ai/bzagents/potential_fields.py"
+			],
+			[
+				"fie",
+				"/C/BZRFlag/bzrflag_git/ai/bzagents/fields_exp.py"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": false,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true
+}
