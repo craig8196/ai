@@ -26,27 +26,27 @@ class ThreadSafeQueue(object):
     def __len__(self):
         return len(self.l)
 
-class ThreadSafeDict(object):
-    """Thread safe dict."""
-    def __init__(self):
-        self.d = {}
-        self.lock = threading.Lock()
-        
-    def add(self, key, value):
-        self.lock.acquire()
-        self.d[key] = value
-        self.lock.release()
-    
-    def __iter__(self):
-        self.lock.acquire()
-        self.iterator = self.d.__iter__()
-        return self
-    
-    def next(self):
-        try:
-            result = self.iterator.next()
-            return result
-        except:
-            self.lock.release()
-            raise
+#~ class ThreadSafeDict(object):
+    #~ """Thread safe dict."""
+    #~ def __init__(self):
+        #~ self.d = {}
+        #~ self.lock = threading.Lock()
+        #~ 
+    #~ def add(self, key, value):
+        #~ self.lock.acquire()
+        #~ self.d[key] = value
+        #~ self.lock.release()
+    #~ 
+    #~ def __iter__(self):
+        #~ self.lock.acquire()
+        #~ self.iterator = self.d.__iter__()
+        #~ return self
+    #~ 
+    #~ def next(self):
+        #~ try:
+            #~ result = self.iterator.next()
+            #~ return result
+        #~ except:
+            #~ self.lock.release()
+            #~ raise
         
