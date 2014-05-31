@@ -4,17 +4,22 @@ intentionally avoided "giving it all away."
 '''
 from __future__ import division
 
+
 import math
 import random
 import os
 
+
 from numpy import linspace
+
 
 def compute_distance(cx, x, cy, y):
     return math.sqrt((cx - x)**2 + (cy - y)**2)
 
+
 def compute_angle(cx, x, cy, y):
     return math.atan2((cy - y), (cx - x))
+
 
 def make_circle_attraction_function(cx, cy, cr, cs, a):
     """cx, cy define center, cr is radius, cs is outer radius"""
@@ -39,6 +44,7 @@ def make_circle_attraction_function(cx, cy, cr, cs, a):
             return a * dx, a * dy
     return circle_attraction_field
 
+
 def make_circle_repulsion_function(cx, cy, cr, cs, a):
     """cx, cy define center, cr is radius, cs is outer radius"""
     def circle_repulsion_field(x, y):
@@ -60,6 +66,7 @@ def make_circle_repulsion_function(cx, cy, cr, cs, a):
             return a * dx, a * dy
     return circle_repulsion_field
 
+
 def make_tangential_function(cx, cy, cr, cs, d, a):
     """cx, cy define center, cr is radius, cs is outer radius, d is -1 for counterclockwise and 1 for clockwise"""
     def tangential_function(x, y):
@@ -77,9 +84,8 @@ def make_tangential_function(cx, cy, cr, cs, d, a):
             return a *dx, a * dy
     return tangential_function
 
+
 def random_field(x, y):
     magnitude = random.uniform(0, 1)
     theta = random.uniform(0, 2*math.pi)
     return magnitude*math.cos(theta), magnitude*math.sin(theta)
-
-# vim: et sw=4 sts=4

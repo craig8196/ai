@@ -16,7 +16,10 @@ from env import EnvironmentState
 from threading import Thread, Lock, Event
 
 
+
+
 class TeamManager(object):
+
 
     """Handle all command and control logic for a team of tanks."""
     def __init__(self, bzrc):
@@ -30,45 +33,55 @@ class TeamManager(object):
             tank.setDaemon(True)
             tank.start()
 
+
         top_left_corner = Container()
         top_left_corner.x = 0   
         top_left_corner.y = 0
         self.corners.append(top_left_corner)
+
 
         bottom_left_corner = Container()
         bottom_left_corner.x = 0
         bottom_left_corner.y = self.env_constants.worldsize
         self.corners.append(bottom_left_corner)
 
+
         top_right_corner = Container()
         top_right_corner.x = self.env_constants.worldsize
         top_right_corner.y = 0
         self.corners.append(top_right_corner)
+
 
         bottom_right_corner = Container()
         bottom_right_corner.x = self.env_constants.worldsize
         bottom_right_corner.y = self.env_constants.worldsize
         self.corners.append(bottom_right_corner)
 
+
         # self.init_corners_not_yet_targeted()
+
 
     # def init_corners_not_yet_targeted(self):
     #     self.corners_not_yet_targeted = []
+
 
     #     top_left_corner = Container()
     #     top_left_corner.x = 0
     #     top_left_corner.y = 0
     #     self.corners_not_yet_targeted.append(top_left_corner)
 
+
     #     bottom_left_corner = Container()
     #     bottom_left_corner.x = 0
     #     bottom_left_corner.y = self.env_constants.worldsize
     #     self.corners_not_yet_targeted.append(bottom_left_corner)
 
+
     #     top_right_corner = Container()
     #     top_right_corner.x = self.env_constants.worldsize
     #     top_right_corner.y = 0
     #     self.corners_not_yet_targeted.append(top_right_corner)
+
 
     #     bottom_right_corner = Container()
     #     bottom_right_corner.x = self.env_constants.worldsize
@@ -111,6 +124,7 @@ class TeamManager(object):
             commands.append(tank.command)
         self.bzrc.do_commands(commands)
         print "Updated "+str(time_diff)
+
 
 class PFieldTank(Thread):
     """Handle all command and control logic for a single tank."""
@@ -185,6 +199,7 @@ class PFieldTank(Thread):
             if self.keep_running:
                 self.behave(s)
                 self.signal_done_updating.set()
+
 
     def closest_object_in_a_list(self, tank, obj_list):
         closest_dist = sys.maxint
@@ -326,6 +341,7 @@ class PFieldTank(Thread):
         
         dx, dy = pfield_function(mytank.x, mytank.y)
 
+
         self.move_to_position(mytank, mytank.x + dx, mytank.y + dy)
         if self.graph:
             self.graph.add_function(pfield_function)
@@ -347,6 +363,7 @@ class PFieldTank(Thread):
         else:
             self.move_to_position(tank, best_enemy.x, best_enemy.y)
 
+
     def move_to_position(self, tank, target_x, target_y):
         """Set command to move to given coordinates."""
         target_angle = math.atan2(target_y - tank.y,
@@ -364,7 +381,9 @@ class PFieldTank(Thread):
             angle -= 2 * math.pi
         return angle
 
+
 # class Corners(object):
+
 
 #     @classmethod
 #     def init_corners_not_yet_targeted(cls, bzrc):
@@ -374,8 +393,12 @@ class PFieldTank(Thread):
 
 
 
+
+
+
 class Container(object):
     pass
+
 
 def main():
     # Process CLI arguments.
@@ -387,15 +410,16 @@ def main():
         print >>sys.stderr, 'usage: %s hostname port' % sys.argv[0]
         sys.exit(-1)
 
+
     # Connect.
     #bzrc = BZRC(host, int(port), debug=True)
     bzrc = BZRC(host, int(port))
+
 
     team = TeamManager(bzrc)
     # Corners.init_corners_not_yet_targeted(bzrc)
     team.play()
 
+
 if __name__ == '__main__':
     main()
-
-# vim: et sw=4 sts=4

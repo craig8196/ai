@@ -1,0 +1,2 @@
+start call startagents.bat
+python bin/bzrflag --world=maps/four_ls.bzw --friendly-fire --red-port=50100 --green-port=50101 --purple-port=50102 --blue-port=50103 --window-size=600x600 --purple-tanks=10 --green-tanks=0 --red-tanks=0 --blue-tanks=0 --occgrid-width=100 --no-report-obstacles  --default-true-positive=0.25 --default-true-negative=0.25
