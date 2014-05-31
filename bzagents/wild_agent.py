@@ -24,7 +24,7 @@ class WildAgent(Tank):
     def new_attractive_field(self, time_diff):
         self.destination_x = random.randint(-400, 400)
         self.destination_y = random.randint(-400, 400)
-        self.time_interval = random.uniform(4, 11)
+        self.time_interval = random.uniform(2, 11)
         self.last_time_goal_set = time_diff
         if self.debug:
             self.print_current_destination()
@@ -66,6 +66,7 @@ def main():
         print >>sys.stderr, '%s: incorrect number of arguments' % execname
         print >>sys.stderr, 'usage: %s hostname port' % sys.argv[0]
         sys.exit(-1)
+        
 
 
     # Connect.
