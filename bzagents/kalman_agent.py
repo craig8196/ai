@@ -54,6 +54,9 @@ class KalmanTank(Tank):
         self.velocity_variance = 0.1
         self.acceleration_variance = 100
         self.position_noise = 5
+        self.last_time_updated = -1
+
+        self.init_identity_matrix()
 
         #these are the six matrices which the lab specs say can be initialized or precomputed just once:
 
@@ -70,6 +73,15 @@ class KalmanTank(Tank):
         #these are the two matrices which are updated each time slice
         self.init_mu_t_matrix()
         self.init_sigma_t_matrix()
+
+    def init_identity_matrix(self):
+        width = 2
+        height = 2
+        self.identity_matrix = MatrixManager(width, height)
+        index_list = [0, 0, 1, 1]
+        self.identity_matrix.set_index_list(1, index_list)
+        index_list = [0, 1, 1, 0]
+        self.identity_matrix.set_index_list(0, index_list)
 
     def init_f_matrix(self):
     	width = 6
@@ -155,6 +167,66 @@ class KalmanTank(Tank):
     	temp_matrix_two = numpy.dot(temp_matrix_one, self.transpose_f_matrix.values)
     	return temp_matrix_two + self.sigma_x_matrix.values
 
+    def update_k(self):
+        temp_one = numpy.dot(self.common_computation(), self.transpose_h_matrix.values)
+        temp_two = numpy.dot(self.h_matrix.values, self.common_computation())
+        temp_three = numpy.dot(temp_two, self.transpose_h_matrix.values)
+        temp_four = temp_three + self.sigma_z_matrix.values
+        temp_five = numpy.linalg.inv(temp_four)
+        return numpy.dot(temp_one, temp_five)
+
+    def update_mu(self):
+        temp_one = numpy.dot(self.f_matrix.values, self.mu_t_matrix.values)
+        temp_two = numpy.dot(self.h_matrix.values, self.f_matrix.values)
+        temp_three = numpy.dot(temp_two, self.mu_t_matrix.values)
+        temp_four = self.z_matrix.values - temp_three
+        temp_five = numpy.dot(self.update_k(), temp_four)
+        self.mu_t_matrix = temp_one + temp_five
+
+    def update_sigma_t(self):
+        temp_one = numpy.dot(self.update_k(), self.h_matrix.values)
+        temp_two = self.identity_matrix - temp_one
+        temp_three = numpy.dot(self.f_matrix.values, self.sigma_t_matrix.values)
+        temp_four = numpy.dot(temp_three, self.transpose_f_matrix.values)
+        temp_five = temp_four + self.sigma_x_matrix.values
+        self.sigma_t_matrix = numpy.dot(temp_two, temp_five) 
+
+    def update_z(self, tank):
+        self.z_matrix = MatrixManager(1, 2)
+        self.z_matrix.values[0][0] = tank.x
+        self.z_matrix.values[1][0] = tank.y
+        # self.z_matrix.print_matrix()
+
+    def behave(self, time_diff, env_state):
+        commands = []
+        if self.last_time_updated == -1:
+            self.last_time_updated = time_diff
+        if time_diff - self.last_time_updated < self.change_in_t:
+            return commands
+
+        self.last_time_updated = time_diff
+        mytank = env_state.get_mytank(self.index)
+        othertank = self.othertanks[0]
+        self.update_z(othertank)
+        # self.update_k()
+        # self.update_mu()
+        # self.update_sigma_t
+
+        bag_o_fields = []
+
+        def pfield_function(x, y):
+            dx = 0
+            dy = 0
+            for field_function in bag_o_fields:
+                newdx, newdy = field_function(x, y)
+                dx += newdx
+                dy += newdy
+            return dx, dy
+        
+        dx, dy = pfield_function(mytank.x, mytank.y)
+        commands.append(self.move_to_position(mytank, mytank.x + dx, mytank.y + dy))
+        return commands
+
 def main():
     # Process CLI arguments.
     try:
@@ -167,10 +239,10 @@ def main():
 
     # Connect.
     #bzrc = BZRC(host, int(port), debug=True)
-    # bzrc = BZRC(host, int(port))
-    # agent = KalmanTank(bzrc, 0, True, "green")
-    agent = KalmanTank(None, 0, True, "green")
-    # agent.play()
+    bzrc = BZRC(host, int(port))
+    agent = KalmanTank(bzrc, 0, True, "green")
+    # agent = KalmanTank(None, 0, True, "green")
+    agent.play()
 
 
 if __name__ == '__main__':

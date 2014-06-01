@@ -28,6 +28,11 @@ class Tank(object):
 	def tick(self, time_diff):
 	    """Get a new state."""
 	    env_state = self.bzrc.get_environment_state(self.color)
+	    mytanks, othertanks, flags, shots = self.bzrc.get_lots_o_stuff()
+	    self.mytanks = mytanks
+	    self.othertanks = othertanks
+	    self.flags = flags
+	    self.shots = shots
 	    self.time_diff = time_diff
 	    commands = self.behave(time_diff, env_state)
 	    self.bzrc.do_commands(commands)

@@ -1,2 +1,2 @@
 start call startagents.bat
-python bin/bzrflag --world=maps/empty.bzw --red-port=50100 --green-port=50101 --purple-port=50102 --blue-port=50103 --window-size=600x600 --purple-tanks=1 --green-tanks=1 --red-tanks=1 --blue-tanks=1
+python bin/bzrflag --friendly-fire --red-port=50100 --green-port=50101 --purple-port=50102 --blue-port=50103 --default-posnoise=5 --respawn-time=10 --seed=0 --world="maps/empty.bzw" --world-size=400 --green-tanks=1 --purple-tanks=1 --red-tanks=0 --blue-tanks=0 --window-size=600x600
