@@ -75,13 +75,13 @@ class KalmanTank(Tank):
         self.init_sigma_t_matrix()
 
     def init_identity_matrix(self):
-        width = 2
-        height = 2
+        width = 6
+        height = 6
         self.identity_matrix = MatrixManager(width, height)
-        index_list = [0, 0, 1, 1]
-        self.identity_matrix.set_index_list(1, index_list)
-        index_list = [0, 1, 1, 0]
-        self.identity_matrix.set_index_list(0, index_list)
+        self.identity_matrix.set_all_values(0)
+        for i in range(6):
+            self.identity_matrix.values[i][i] = 1
+        # self.identity_matrix.print_matrix()
 
     def init_f_matrix(self):
     	width = 6
@@ -161,41 +161,42 @@ class KalmanTank(Tank):
     	self.sigma_t_matrix.set_index_list(self.acceleration_variance, index_list)
     	# self.sigma_t_matrix.print_matrix()
 
+    def update_z(self, tank):
+        self.z_matrix = MatrixManager(1, 2)
+        self.z_matrix.values[0][0] = tank.x
+        self.z_matrix.values[1][0] = tank.y
+        # self.z_matrix.print_matrix()
+
     #	Note also that the expression (F(sigma-t)FT + sigma-x) occurs three times in the equations, so you may save some time by calculating that first.
-    def common_computation(self):
+    def update_common_computation(self):
     	temp_matrix_one = numpy.dot(self.f_matrix.values, self.sigma_t_matrix.values)
     	temp_matrix_two = numpy.dot(temp_matrix_one, self.transpose_f_matrix.values)
-    	return temp_matrix_two + self.sigma_x_matrix.values
+    	self.common_computation = temp_matrix_two + self.sigma_x_matrix.values
 
     def update_k(self):
-        temp_one = numpy.dot(self.common_computation(), self.transpose_h_matrix.values)
-        temp_two = numpy.dot(self.h_matrix.values, self.common_computation())
+        temp_one = numpy.dot(self.common_computation, self.transpose_h_matrix.values)
+        temp_two = numpy.dot(self.h_matrix.values, self.common_computation)
         temp_three = numpy.dot(temp_two, self.transpose_h_matrix.values)
         temp_four = temp_three + self.sigma_z_matrix.values
         temp_five = numpy.linalg.inv(temp_four)
-        return numpy.dot(temp_one, temp_five)
+        self.k = numpy.dot(temp_one, temp_five)
 
     def update_mu(self):
         temp_one = numpy.dot(self.f_matrix.values, self.mu_t_matrix.values)
         temp_two = numpy.dot(self.h_matrix.values, self.f_matrix.values)
         temp_three = numpy.dot(temp_two, self.mu_t_matrix.values)
         temp_four = self.z_matrix.values - temp_three
-        temp_five = numpy.dot(self.update_k(), temp_four)
-        self.mu_t_matrix = temp_one + temp_five
+        temp_five = numpy.dot(self.k, temp_four)
+        self.mu_t_matrix.values = temp_one + temp_five
+        print "update mu"
+        # self.mu_t_matrix.print_matrix()
 
     def update_sigma_t(self):
-        temp_one = numpy.dot(self.update_k(), self.h_matrix.values)
-        temp_two = self.identity_matrix - temp_one
-        temp_three = numpy.dot(self.f_matrix.values, self.sigma_t_matrix.values)
-        temp_four = numpy.dot(temp_three, self.transpose_f_matrix.values)
-        temp_five = temp_four + self.sigma_x_matrix.values
-        self.sigma_t_matrix = numpy.dot(temp_two, temp_five) 
-
-    def update_z(self, tank):
-        self.z_matrix = MatrixManager(1, 2)
-        self.z_matrix.values[0][0] = tank.x
-        self.z_matrix.values[1][0] = tank.y
-        # self.z_matrix.print_matrix()
+        temp_one = numpy.dot(self.k, self.h_matrix.values)
+        temp_two = self.identity_matrix.values - temp_one
+        self.sigma_t_matrix.values = numpy.dot(temp_two, self.common_computation)
+        print "update sigma_t"
+        # self.sigma_t_matrix.print_matrix() 
 
     def behave(self, time_diff, env_state):
         commands = []
@@ -208,9 +209,10 @@ class KalmanTank(Tank):
         mytank = env_state.get_mytank(self.index)
         othertank = self.othertanks[0]
         self.update_z(othertank)
-        # self.update_k()
-        # self.update_mu()
-        # self.update_sigma_t
+        self.update_common_computation()
+        self.update_k()
+        self.update_mu()
+        self.update_sigma_t()
 
         bag_o_fields = []
 

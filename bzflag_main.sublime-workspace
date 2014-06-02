@@ -4,16 +4,64 @@
 		"selected_items":
 		[
 			[
+				"up",
+				"update_sigma_t"
+			],
+			[
+				"temp",
+				"temp_five"
+			],
+			[
+				"temo",
+				"temp_two"
+			],
+			[
+				"si",
+				"sigma_t_matrix"
+			],
+			[
 				"sig",
 				"sigma_x_matrix"
 			],
 			[
-				"temp",
-				"temp_matrix_two"
+				"tra",
+				"transpose_f_matrix"
+			],
+			[
+				"ini",
+				"init_identity_matrix"
+			],
+			[
+				"set",
+				"set_index_list"
+			],
+			[
+				"se",
+				"set_index_list"
+			],
+			[
+				"z",
+				"z_matrix"
+			],
+			[
+				"la",
+				"last_time_updated"
+			],
+			[
+				"time",
+				"time_diff"
+			],
+			[
+				"update",
+				"update_z"
 			],
 			[
 				"tr",
-				"transpose_f_matrix"
+				"transpose_h_matrix"
+			],
+			[
+				"tran",
+				"transpose_h_matrix"
 			],
 			[
 				"sigma",
@@ -22,10 +70,6 @@
 			[
 				"init",
 				"init_sigma_t_matrix"
-			],
-			[
-				"set",
-				"set_all_values"
 			],
 			[
 				"print",
@@ -64,10 +108,6 @@
 				"index_list"
 			],
 			[
-				"se",
-				"set_list_of_index"
-			],
-			[
 				"f",
 				"f_matrix"
 			],
@@ -86,10 +126,6 @@
 			[
 				"a",
 				"attractive_constant"
-			],
-			[
-				"time",
-				"time_interval"
 			],
 			[
 				"destin",
@@ -198,10 +234,6 @@
 			[
 				"is",
 				"is_occupied"
-			],
-			[
-				"update",
-				"update_conditional_prob"
 			],
 			[
 				"calcu",
@@ -327,7 +359,7 @@
 			"file": "run_game.bat",
 			"settings":
 			{
-				"buffer_size": 226,
+				"buffer_size": 309,
 				"line_ending": "Windows"
 			}
 		},
@@ -391,7 +423,7 @@
 			"file": "bzagents/pfield_team_agent.py",
 			"settings":
 			{
-				"buffer_size": 15703,
+				"buffer_size": 14712,
 				"line_ending": "Windows"
 			}
 		},
@@ -415,7 +447,7 @@
 			"file": "bzagents/base_tank.py",
 			"settings":
 			{
-				"buffer_size": 1689,
+				"buffer_size": 1869,
 				"line_ending": "Windows"
 			}
 		},
@@ -431,7 +463,15 @@
 			"file": "bzagents/kalman_agent.py",
 			"settings":
 			{
-				"buffer_size": 6308,
+				"buffer_size": 9096,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "runkalman.sh",
+			"settings":
+			{
+				"buffer_size": 196,
 				"line_ending": "Windows"
 			}
 		},
@@ -616,22 +656,22 @@
 					"file": "run_game.bat",
 					"settings":
 					{
-						"buffer_size": 226,
+						"buffer_size": 309,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								226,
-								226
+								309,
+								309
 							]
 						],
 						"settings":
 						{
 							"syntax": "Packages/Batch File/Batch File.tmLanguage"
 						},
-						"translation.x": 141.0,
+						"translation.x": 981.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
@@ -701,8 +741,8 @@
 						"selection":
 						[
 							[
-								9137,
-								9137
+								5834,
+								5640
 							]
 						],
 						"settings":
@@ -712,7 +752,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3007.0,
+						"translation.y": 2026.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -740,7 +780,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 6304.0,
+						"translation.y": 345.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -834,15 +874,15 @@
 					"file": "bzagents/pfield_team_agent.py",
 					"settings":
 					{
-						"buffer_size": 15703,
+						"buffer_size": 14712,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3993,
-								3993
+								10187,
+								10187
 							]
 						],
 						"settings":
@@ -852,7 +892,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1300.0,
+						"translation.y": 4466.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -918,15 +958,15 @@
 					"file": "bzagents/base_tank.py",
 					"settings":
 					{
-						"buffer_size": 1689,
+						"buffer_size": 1869,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								692,
-								692
+								575,
+								575
 							]
 						],
 						"settings":
@@ -935,7 +975,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 75.0,
+						"translation.y": 190.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -952,8 +992,8 @@
 						"selection":
 						[
 							[
-								2353,
-								2353
+								1218,
+								1218
 							]
 						],
 						"settings":
@@ -963,7 +1003,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 618.0,
+						"translation.y": 330.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -973,20 +1013,48 @@
 					"file": "bzagents/kalman_agent.py",
 					"settings":
 					{
-						"buffer_size": 6308,
+						"buffer_size": 9096,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								540,
-								540
+								8144,
+								8144
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Python/Python.tmLanguage"
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2955.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "runkalman.sh",
+					"settings":
+					{
+						"buffer_size": 196,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								196,
+								196
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/ShellScript/Shell-Unix-Generic.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -995,7 +1063,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 16,
+					"buffer": 17,
 					"file": "bzagents/grid.py",
 					"settings":
 					{
