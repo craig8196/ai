@@ -4,16 +4,20 @@
 		"selected_items":
 		[
 			[
+				"set",
+				"set_F"
+			],
+			[
+				"pre",
+				"predict"
+			],
+			[
 				"com",
 				"common_computation"
 			],
 			[
 				"mu",
 				"mu_t_matrix"
-			],
-			[
-				"set",
-				"set_all_values"
 			],
 			[
 				"up",
@@ -439,7 +443,7 @@
 			"file": "bzagents/env.py",
 			"settings":
 			{
-				"buffer_size": 3045,
+				"buffer_size": 3196,
 				"line_ending": "Windows"
 			}
 		},
@@ -455,7 +459,7 @@
 			"file": "bzagents/base_tank.py",
 			"settings":
 			{
-				"buffer_size": 2136,
+				"buffer_size": 2492,
 				"line_ending": "Windows"
 			}
 		},
@@ -471,7 +475,7 @@
 			"file": "bzagents/kalman_agent.py",
 			"settings":
 			{
-				"buffer_size": 11801,
+				"buffer_size": 15306,
 				"line_ending": "Windows"
 			}
 		},
@@ -479,7 +483,7 @@
 			"file": "runkalman.sh",
 			"settings":
 			{
-				"buffer_size": 196,
+				"buffer_size": 235,
 				"line_ending": "Windows"
 			}
 		},
@@ -488,6 +492,14 @@
 			"settings":
 			{
 				"buffer_size": 10863,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "bzagents/graph.py",
+			"settings":
+			{
+				"buffer_size": 7110,
 				"line_ending": "Windows"
 			}
 		}
@@ -524,6 +536,7 @@
 	},
 	"file_history":
 	[
+		"/C/BZRFlag/bzrflag_git/ai/bzagents/conforming_team_agent.py",
 		"/C/BZRFlag/bzrflag_git/ai/bzagents/agent0.py",
 		"/C/Python27/Lib/site-packages/OpenGL/GLUT/special.py",
 		"/C/BZRFlag/bzrflag_git/ai/bzagents/bzui.py",
@@ -601,7 +614,7 @@
 	"groups":
 	[
 		{
-			"selected": 15,
+			"selected": 13,
 			"sheets":
 			[
 				{
@@ -911,7 +924,7 @@
 					"file": "bzagents/env.py",
 					"settings":
 					{
-						"buffer_size": 3045,
+						"buffer_size": 3196,
 						"regions":
 						{
 						},
@@ -967,24 +980,24 @@
 					"file": "bzagents/base_tank.py",
 					"settings":
 					{
-						"buffer_size": 2136,
+						"buffer_size": 2492,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1362,
-								1362
+								1756,
+								1756
 							]
 						],
 						"settings":
 						{
 							"syntax": "Packages/Python/Python.tmLanguage",
-							"translate_tabs_to_spaces": false
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 425.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1001,8 +1014,8 @@
 						"selection":
 						[
 							[
-								1218,
-								1218
+								1871,
+								1871
 							]
 						],
 						"settings":
@@ -1012,7 +1025,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 330.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1022,25 +1035,25 @@
 					"file": "bzagents/kalman_agent.py",
 					"settings":
 					{
-						"buffer_size": 11801,
+						"buffer_size": 15306,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								11282,
-								11282
+								554,
+								554
 							]
 						],
 						"settings":
 						{
 							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
+							"tab_size": 2,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3765.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1050,15 +1063,15 @@
 					"file": "runkalman.sh",
 					"settings":
 					{
-						"buffer_size": 196,
+						"buffer_size": 235,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								196,
-								196
+								235,
+								235
 							]
 						],
 						"settings":
@@ -1095,6 +1108,34 @@
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "bzagents/graph.py",
+					"settings":
+					{
+						"buffer_size": 7110,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4581,
+								4581
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1450.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1143,6 +1184,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"gr",
+				"bzagents/graph.py"
+			],
 			[
 				"grid",
 				"bzagents/grid.py"
