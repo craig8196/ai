@@ -68,4 +68,4 @@ class Tank(object):
 		target_angle = math.atan2(target_y - tank.y,
 	                              target_x - tank.x)
 		relative_angle = self.normalize_angle(target_angle - tank.angle)
-		return Command(tank.index, 0, 2 * relative_angle, True)
+		return Command(tank.index, 0, 2.5 * relative_angle, True)

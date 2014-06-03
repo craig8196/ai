@@ -44,6 +44,7 @@ class EnvironmentConstants(object):
     
     def set_constants(self, constants):
         self.constants = constants
+        print constants
         self.worldsize = int(constants['worldsize'])
         self.alive = constants['tankalive']
         self.dead = constants['tankdead']
@@ -57,7 +58,9 @@ class EnvironmentConstants(object):
             self.truenegative = float(constants['truenegative'])
         else:
             self.truenegative = None
-        if self.truepositive != None and self.truenegative != None:
+        print self.truepositive, self.truenegative
+        if (self.truepositive != None and self.truenegative != None) and \
+            (self.truepositive != 1.0 and self.truenegative != 1.0):
             self.occgrid_enabled = True
             self.grid = Grid(self.worldsize, self.worldsize)
             self.grid.set_true_positive(self.truepositive)

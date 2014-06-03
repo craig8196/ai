@@ -4,6 +4,18 @@
 		"selected_items":
 		[
 			[
+				"com",
+				"common_computation"
+			],
+			[
+				"mu",
+				"mu_t_matrix"
+			],
+			[
+				"set",
+				"set_all_values"
+			],
+			[
 				"up",
 				"update_sigma_t"
 			],
@@ -30,10 +42,6 @@
 			[
 				"ini",
 				"init_identity_matrix"
-			],
-			[
-				"set",
-				"set_index_list"
 			],
 			[
 				"se",
@@ -375,7 +383,7 @@
 			"file": "startagents.bat",
 			"settings":
 			{
-				"buffer_size": 47,
+				"buffer_size": 104,
 				"line_ending": "Windows"
 			}
 		},
@@ -447,7 +455,7 @@
 			"file": "bzagents/base_tank.py",
 			"settings":
 			{
-				"buffer_size": 1869,
+				"buffer_size": 2136,
 				"line_ending": "Windows"
 			}
 		},
@@ -463,7 +471,7 @@
 			"file": "bzagents/kalman_agent.py",
 			"settings":
 			{
-				"buffer_size": 9096,
+				"buffer_size": 11801,
 				"line_ending": "Windows"
 			}
 		},
@@ -544,6 +552,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"update_k",
 			"cond_prob_obstacle_not_obstacle",
 			"cond_prob_obstacle_obstacle",
 			"set_true_positive",
@@ -671,7 +680,7 @@
 						{
 							"syntax": "Packages/Batch File/Batch File.tmLanguage"
 						},
-						"translation.x": 981.0,
+						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
@@ -708,15 +717,15 @@
 					"file": "startagents.bat",
 					"settings":
 					{
-						"buffer_size": 47,
+						"buffer_size": 104,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								47,
-								47
+								104,
+								104
 							]
 						],
 						"settings":
@@ -892,7 +901,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 4466.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -958,15 +967,15 @@
 					"file": "bzagents/base_tank.py",
 					"settings":
 					{
-						"buffer_size": 1869,
+						"buffer_size": 2136,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								575,
-								575
+								1362,
+								1362
 							]
 						],
 						"settings":
@@ -975,7 +984,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 190.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1013,15 +1022,15 @@
 					"file": "bzagents/kalman_agent.py",
 					"settings":
 					{
-						"buffer_size": 9096,
+						"buffer_size": 11801,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								8144,
-								8144
+								11282,
+								11282
 							]
 						],
 						"settings":
@@ -1031,7 +1040,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2955.0,
+						"translation.y": 3765.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"

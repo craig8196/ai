@@ -115,7 +115,7 @@ class PotentialFieldGraph(Thread):
 class KalmanHeatMapGraph(Thread):
     """Enables asynchronous graphing using a producer-consumer model."""    
     
-    def __init__(self, worldsize=800, samples=80):
+    def __init__(self, worldsize=800, samples=100):
         """Graphs only square worlds centered about the origin."""
         super(KalmanHeatMapGraph, self).__init__()
         self.worldsize = worldsize
@@ -132,16 +132,9 @@ class KalmanHeatMapGraph(Thread):
         self.keep_running = False
     
     def add(self, position, sigma_matrix):
-        """Add another function to graph, the function must be of type
-        f(x, y). This is the producer.
-        """
         self.sigmas.add((position, sigma_matrix))
     
     def remove(self):
-        """Remove a function from the functions array.
-        This is the consumer.
-        Return a function of the type f(x, y).
-        """
         result = self.sigmas.remove()
         while len(self.sigmas) > 1:
             result = self.sigmas.remove()
@@ -154,7 +147,6 @@ class KalmanHeatMapGraph(Thread):
             if self.keep_running:
                 self.gp.write(self.plot(position, sigma))
                 self.gp.flush()
-                print "Flushed"
     
     # Helper functions.
     def gnuplot_header(self, minimum, maximum):
