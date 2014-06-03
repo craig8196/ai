@@ -42,6 +42,18 @@ class EnvironmentConstants(object):
         self.constants = None
         self.obstacle_functions = []
     
+    def get_base_location(self, color):
+        for t in self.teams:
+            if t.color == color:
+                x = 0
+                y = 0
+                for points in t.base:
+                    x += points[0]
+                    y += points[1]
+                if len(t.base) > 0:
+                    return x/len(t.base), y/len(t.base)
+        return 0, 0
+    
     def set_constants(self, constants):
         self.constants = constants
         print constants

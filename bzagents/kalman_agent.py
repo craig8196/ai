@@ -79,10 +79,10 @@ class KalmanFilter(object):
         # covariance matrix for position, velocity, and acceleration for x and y
         self.sigma_t = numpy.zeros((6, 6))
         self.sigma_t[0, 0] = 100
-        self.sigma_t[1, 1] = 10
+        self.sigma_t[1, 1] = 1
         self.sigma_t[2, 2] = 1
         self.sigma_t[3, 3] = 100
-        self.sigma_t[4, 4] = 10
+        self.sigma_t[4, 4] = 1
         self.sigma_t[5, 5] = 1
     
     def is_confident_in_position(self, std_dev=1.1):
@@ -148,8 +148,10 @@ class KalmanTank(Tank):
             return commands
         
         # reset the confidence we have in position, etc., every ten seconds
-        if time_diff - self.last_time_reset < 20:
+        if time_diff - self.last_time_reset > 20:
             self.filter.reset_covariance_matrix()
+            print "Reset"
+            self.last_time_reset = time_diff
         
         self.last_time_updated = time_diff
         # calculate estimated position
@@ -162,27 +164,31 @@ class KalmanTank(Tank):
         self.kalmangraph.add(estimated_pos, self.filter.get_positional_covariance_matrix(),
                             [(othertank.x, othertank.y), self.target_pos, self.fire_pos])
         #~ print [(othertank.x, othertank.y), self.target_pos, self.fire_pos]
+        print self.dist(self.target_pos, self.fire_pos)
         return commands
+        
+    def dist(self, pos1, pos2):
+        return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
     
     def get_future_pos(self, delta_t, lag=0.023):
         delta_t += lag
-        #~ self.filter.set_F(delta_t)
-        #~ mu = self.filter.F.dot(self.filter.mu_t)
-        mu = self.filter.mu_t
-        self.filter.set_F(self.change_in_t)
-        while delta_t > 0:
-            delta_t -= self.change_in_t
-            mu = self.filter.F.dot(mu)
+        self.filter.set_F(delta_t)
+        mu = self.filter.F.dot(self.filter.mu_t)
+        #~ mu = self.filter.mu_t
+        #~ self.filter.set_F(self.change_in_t)
+        #~ while delta_t > 0:
+            #~ delta_t -= self.change_in_t
+            #~ mu = self.filter.F.dot(mu)
         return mu[0,0], mu[3,0]
     
     def aim(self, mytank, target_pos):
         confident = self.filter.is_confident_in_position()
         curr_dist = math.sqrt((target_pos[0] - mytank.x)**2 + (target_pos[1] - mytank.y)**2)
         
-        future_pos = self.get_future_pos(curr_dist/100)#, self.change_in_t*3)
+        future_pos = self.get_future_pos(curr_dist/100)
         future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
         
-        fire_pos = self.get_future_pos(future_dist/100)#, self.change_in_t*3)
+        fire_pos = self.get_future_pos(future_dist/100)
         fire_dist = math.sqrt((fire_pos[0] - mytank.x)**2 + (fire_pos[1] - mytank.y)**2)
         fire_angle = math.atan2(fire_pos[1] - mytank.y, fire_pos[0] - mytank.x)
         fire_delta = abs(math.asin(3/fire_dist))

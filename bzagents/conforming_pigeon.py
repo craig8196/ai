@@ -23,6 +23,7 @@
 import sys
 import math
 import time
+import random
 from Gnuplot import GnuplotProcess
 
 from bzrc import BZRC, Command
@@ -33,13 +34,10 @@ class ConformingAgent(object):
 
     def __init__(self, bzrc):
         self.bzrc = bzrc
-        self.constants = self.bzrc.get_constants()
+        self.constants = self.bzrc.get_environment_constants()
         self.commands = []
-        self.tanks = {}
-        self.bases = bzrc.get_bases()
-        for base in self.bases:
-            if base.color == self.constants['team']:
-                self.base = base
+        self.last_goal_switch = -20
+        self.goal = (0, 0)
 
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
@@ -48,9 +46,6 @@ class ConformingAgent(object):
         self.othertanks = othertanks
         self.flags = flags
         self.shots = shots
-        self.obstacles = self.bzrc.get_obstacles()
-        self.enemies = [tank for tank in othertanks if tank.color !=
-                        self.constants['team']]
         
         self.commands = []
         
@@ -59,12 +54,18 @@ class ConformingAgent(object):
 
         results = self.bzrc.do_commands(self.commands)
     
-    def behave(self, tank, time_diff, plot=False):
+    def behave(self, tank, time_diff):
         """Move in one direction.
         """
         bag_o_fields = []
         
-        f = make_line_function(0, 0, 1, 1, max_distance=400, angle=20)
+        if time_diff - self.last_goal_switch > 20:
+            self.last_goal_switch = time_diff
+            size = self.constants.worldsize
+            self.goal = (random.randint(int(-size), int(size)),
+                         random.randint(int(-size), int(size)))
+        
+        f = make_circle_attraction_function(self.goal[0], self.goal[1], 1, self.constants.worldsize, 2)
         bag_o_fields.append(f)
         
         def pfield_function(x, y):
@@ -77,7 +78,7 @@ class ConformingAgent(object):
             return dx, dy
         
         dx, dy = pfield_function(tank.x, tank.y)
-        command = self.move_to_position(tank, tank.x + dx, tank.y + dy)
+        command = self.move_to_position(tank, tank.x + dx, tank.y + dy, False)
         self.commands.append(command)
     
     def normalize_angle(self, angle):
@@ -89,12 +90,12 @@ class ConformingAgent(object):
             angle -= 2 * math.pi
         return angle
 
-    def move_to_position(self, tank, target_x, target_y):
+    def move_to_position(self, tank, target_x, target_y, shoot=True):
         """Set command to move to given coordinates."""
         target_angle = math.atan2(target_y - tank.y,
                                   target_x - tank.x)
         relative_angle = self.normalize_angle(target_angle - tank.angle)
-        return Command(tank.index, 1, 2 * relative_angle, True)
+        return Command(tank.index, 1, 2 * relative_angle, shoot)
         
 
 def main():
