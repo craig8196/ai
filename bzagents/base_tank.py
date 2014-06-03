@@ -63,3 +63,4 @@ class Tank(object):
 	                              target_x - tank.x)
 	    relative_angle = self.normalize_angle(target_angle - tank.angle)
 	    return Command(tank.index, 1, 2 * relative_angle, True)
+    

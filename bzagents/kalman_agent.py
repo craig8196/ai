@@ -83,7 +83,6 @@ class KalmanFilter(object):
         # make sigma t + 1 computation, update previous variable
         self.sigma_t = (self.identity - K1.dot(self.H)).dot(common)
         self.add_time(self.delta_t)
-        print "Kalman time:", self.time_from_start
         return self.mu_t[0, 0], self.mu_t[3, 0]
 
 '''Note: when a MatrixManager object calls the method set_index_list(), it is taking as a parameter 
@@ -108,20 +107,18 @@ class KalmanTank(Tank):
         self.filter = KalmanFilter(self.position_noise, self.position_noise)
         self.kalmangraph = KalmanHeatMapGraph()
         self.kalmangraph.start()
-        print "Started"
     
     def behave(self, time_diff, env_state):
         commands = []
         if self.last_time_updated == -1:
             self.last_time_updated = time_diff
-        if time_diff - self.last_time_updated < 0.5:
+        if time_diff - self.last_time_updated < self.change_in_t:
             return commands
         
         self.last_time_updated = time_diff
         mytank = env_state.get_mytank(self.index)
         othertank = self.othertanks[0]
         self.filter.set_F(time_diff - self.filter.time_from_start)
-        print "Realt time:", time_diff
         estimated_pos = self.filter.next_observed_z(othertank.x, othertank.y)
         self.kalmangraph.add(estimated_pos, self.filter.sigma_z)
         
@@ -129,8 +126,45 @@ class KalmanTank(Tank):
         return commands
     
     def aim(self, mytank, target_pos):
-        print mytank.angle
-        return Command(mytank.index, 0, 0, True)
+        print target_pos
+        self.filter.set_F(0.2)
+        future_mu = self.filter.F.dot(self.filter.mu_t)
+        future_pos = (future_mu[0,0], future_mu[3, 0])
+        curr_angle = math.atan2(target_pos[1] - mytank.y, target_pos[0] - mytank.x)
+        future_angle = math.atan2(future_pos[1] - mytank.y, future_pos[0] - mytank.x)
+        curr_dist = math.sqrt((target_pos[0] - mytank.x)**2 + (target_pos[1] - mytank.y)**2)
+        future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
+        
+        self.filter.set_F(future_dist/350)
+        fire_mu = self.filter.F.dot(self.filter.mu_t)
+        fire_pos = (fire_mu[0,0], fire_mu[3, 0])
+        fire_dist = math.sqrt((fire_pos[0] - mytank.x)**2 + (fire_pos[1] - mytank.y)**2)
+        fire_angle = math.atan2(fire_pos[1] - mytank.y, fire_pos[0] - mytank.x)
+        fire_delta = abs(math.asin(8/fire_dist))
+        if abs(fire_angle - mytank.angle) < fire_angle and fire_dist <= 350:
+            fire = True
+        else:
+            fire = False
+        
+        angvel = 2*self.normalize_angle(fire_angle - mytank.angle)
+        print mytank.angle, fire_angle, angvel
+        return Command(mytank.index, 0, angvel, fire)
+    
+    def get_angvel(self, myang, targetang):
+        ang = targetang-myang
+        ang = self.normalize_angle(ang)
+        print "Ang:", ang
+        if ang < 0:
+            angvel = -1
+        else:
+            angvel = 1
+        
+        if abs(ang) < 1:
+            angvel *= ang/1.5
+        
+        print angvel
+        
+        return angvel
 
 def main():
     # Process CLI arguments.
