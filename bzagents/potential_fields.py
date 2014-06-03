@@ -12,6 +12,31 @@ import os
 
 from numpy import linspace
 
+# Vector math
+def length_squared(v1, v2):
+    """Return |v1-v2|^2."""
+    return (v1[0] - v2[0])**2 + (v1[1] - v2[1])**2
+
+def calc_distance(v1, v2):
+    """Return distance between 2 tuples of length 2."""
+    return math.sqrt(length_squared(v1, v2))
+
+def dot_product(v1, v2):
+    """Return dot product of 2 tuples length 2."""
+    return v1[0]*v2[0] + v1[1]*v2[1]
+
+def calc_vector(x1, y1, x2, y2, max_distance, angle):
+    xdiff = x2 - x1
+    ydiff = y2 - y1
+    d = math.sqrt(xdiff**2 + ydiff**2)
+    if d > max_distance:
+        return 0, 0
+    else:
+        theta = math.atan2(ydiff, xdiff)
+        theta += angle*math.pi/180
+        dx = ((max_distance - d)/max_distance)*math.cos(theta)
+        dy = ((max_distance - d)/max_distance)*math.sin(theta)
+        return dx, dy
 
 def compute_distance(cx, x, cy, y):
     return math.sqrt((cx - x)**2 + (cy - y)**2)
@@ -84,6 +109,24 @@ def make_tangential_function(cx, cy, cr, cs, d, a):
             return a *dx, a * dy
     return tangential_function
 
+def make_line_function(x1, y1, x2, y2, max_distance=10, angle=180):
+    """x1, y1 and x2, y2 are the start and end points of the line.
+    Return a function.
+    """
+    def line_field(x, y):
+        len_sqrd = length_squared((x1, y1), (x2, y2))
+        if len_sqrd == 0.0:
+            return calc_vector(x, y, x1, y1, max_distance, angle)
+        t = dot_product((x - x1, y - x1), (x2 - x1, y2 - y1)) / len_sqrd
+        if t < 0.0:
+            return calc_vector(x, y, x1, y1, max_distance, angle)
+        elif t > 1.0:
+            return calc_vector(x, y, x2, y2, max_distance, angle)
+        else:
+            newx = x1 + t*(x2 - x1)
+            newy = y1 + t*(y2 - y1)
+            return calc_vector(x, y, newx, newy, max_distance, angle)
+    return line_field
 
 def random_field(x, y):
     magnitude = random.uniform(0, 1)

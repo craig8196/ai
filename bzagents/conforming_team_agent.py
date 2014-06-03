@@ -62,8 +62,39 @@ class ConformingAgent(object):
     def behave(self, tank, time_diff, plot=False):
         """Move in one direction.
         """
-        command = Command(tank.index, 0.5, 0, False)
+        bag_o_fields = []
+        
+        f = make_line_function(0, 0, 1, 1, max_distance=400, angle=20)
+        bag_o_fields.append(f)
+        
+        def pfield_function(x, y):
+            dx = 0
+            dy = 0
+            for field_function in bag_o_fields:
+                newdx, newdy = field_function(x, y)
+                dx += newdx
+                dy += newdy
+            return dx, dy
+        
+        dx, dy = pfield_function(tank.x, tank.y)
+        command = self.move_to_position(tank, tank.x + dx, tank.y + dy)
         self.commands.append(command)
+    
+    def normalize_angle(self, angle):
+        """Make any angle be between +/- pi."""
+        angle -= 2 * math.pi * int (angle / (2 * math.pi))
+        if angle <= -math.pi:
+            angle += 2 * math.pi
+        elif angle > math.pi:
+            angle -= 2 * math.pi
+        return angle
+
+    def move_to_position(self, tank, target_x, target_y):
+        """Set command to move to given coordinates."""
+        target_angle = math.atan2(target_y - tank.y,
+                                  target_x - tank.x)
+        relative_angle = self.normalize_angle(target_angle - tank.angle)
+        return Command(tank.index, 1, 2 * relative_angle, True)
         
 
 def main():
