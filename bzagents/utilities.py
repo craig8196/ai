@@ -23,6 +23,12 @@ class ThreadSafeQueue(object):
         self.l_mut.release()
         return result
     
+    def clear(self):
+        self.l_mut.acquire()
+        self.l = []
+        self.l_sem = threading.Semaphore(0)
+        self.l_mut.release()
+    
     def __len__(self):
         return len(self.l)
 

@@ -131,22 +131,24 @@ class KalmanHeatMapGraph(Thread):
         """Stop graphing."""
         self.keep_running = False
     
-    def add(self, position, sigma_matrix):
-        self.sigmas.add((position, sigma_matrix))
+    def add(self, position, sigma_matrix, points=[]):
+        self.sigmas.add((position, sigma_matrix, points))
     
     def remove(self):
-        result = self.sigmas.remove()
-        while len(self.sigmas) > 1:
-            result = self.sigmas.remove()
-        return result
+        return self.sigmas.remove()
+    
+    def clear(self):
+        self.sigmas.clear()
     
     def run(self):
         """Continuously graph functions."""
         while self.keep_running:
-            position, sigma = self.remove()
+            self.clear()
+            position, sigma, points = self.remove()
             if self.keep_running:
-                self.gp.write(self.plot(position, sigma))
+                self.gp.write(self.plot(position, sigma, points))
                 self.gp.flush()
+                time.sleep(0.5)
     
     # Helper functions.
     def gnuplot_header(self, minimum, maximum):
@@ -166,7 +168,7 @@ class KalmanHeatMapGraph(Thread):
         s += 'set isosamples %s\n' % self.samples
         return s
     
-    def plot(self, position, sigma):
+    def plot(self, position, sigma, points):
         '''Return a Gnuplot command to plot a field.'''
         s = ''
         s += 'sigma_x = %s\n' % str(sigma[0, 0])

@@ -69,9 +69,32 @@ class KalmanFilter(object):
     def add_time(self, time_amount):
         self.time_from_start += time_amount
     
+    def get_positional_covariance_matrix(self):
+        #~ return self.sigma_z
+        sigma = numpy.matrix([[self.sigma_t[0,0], self.sigma_t[0,3]],
+                              [self.sigma_t[3,0], self.sigma_t[3,3]]])
+        return sigma
+    
+    def reset_covariance_matrix(self):
+        # covariance matrix for position, velocity, and acceleration for x and y
+        self.sigma_t = numpy.zeros((6, 6))
+        self.sigma_t[0, 0] = 100
+        self.sigma_t[1, 1] = 10
+        self.sigma_t[2, 2] = 1
+        self.sigma_t[3, 3] = 100
+        self.sigma_t[4, 4] = 10
+        self.sigma_t[5, 5] = 1
+    
+    def is_confident_in_position(self, std_dev=1.1):
+        if abs(self.Z[0,0] - self.mu_t[0,0]) < math.sqrt(self.sigma_t[0,0])*std_dev and \
+            abs(self.Z[1,0] - self.mu_t[3,0]) < math.sqrt(self.sigma_t[3,3])*std_dev:
+            return True
+        return False
+    
     def next_observed_z(self, x, y):
         """Return the predicted location of the tank, mu_t+1."""
         Z = numpy.zeros((2, 1))
+        self.Z = Z
         Z[0, 0] = x
         Z[1, 0] = y
         # make common computation since the expression (F(sigma-t)FT + sigma-x) occurs three times
@@ -96,7 +119,7 @@ m.values
 class KalmanTank(Tank):
     def __init__(self, bzrc, index, debug, color):
         super(KalmanTank, self).__init__(bzrc, index, debug, color)
-        self.change_in_t = 0.2
+        self.change_in_t = 0.1
         self.friction = 0
         self.position_variance = 0.1
         self.velocity_variance = 0.1
@@ -105,55 +128,78 @@ class KalmanTank(Tank):
         self.last_time_updated = -1
         self.constants = bzrc.get_environment_constants()
         self.filter = KalmanFilter(self.position_noise, self.position_noise)
-        self.kalmangraph = KalmanHeatMapGraph()
+        self.kalmangraph = KalmanHeatMapGraph(self.constants.worldsize)
         self.kalmangraph.start()
+        self.last_time_reset = 0
     
     def behave(self, time_diff, env_state):
         commands = []
+        mytank = env_state.get_mytank(self.index)
+        othertank = self.othertanks[0]
+        
+        if othertank.status=='dead':
+            self.filter.reset_covariance_matrix()
+            return commands
+        
+        # only update every so often
         if self.last_time_updated == -1:
             self.last_time_updated = time_diff
         if time_diff - self.last_time_updated < self.change_in_t:
             return commands
         
+        # reset the confidence we have in position, etc., every ten seconds
+        if time_diff - self.last_time_reset < 20:
+            self.filter.reset_covariance_matrix()
+        
         self.last_time_updated = time_diff
-        mytank = env_state.get_mytank(self.index)
-        othertank = self.othertanks[0]
+        # calculate estimated position
         self.filter.set_F(time_diff - self.filter.time_from_start)
         estimated_pos = self.filter.next_observed_z(othertank.x, othertank.y)
-        self.kalmangraph.add(estimated_pos, self.filter.sigma_z)
-        
+        # graph it
+        self.kalmangraph.add(estimated_pos, self.filter.get_positional_covariance_matrix())
+        # generate a command for aiming and shooting
         commands.append(self.aim(mytank, estimated_pos))
+        self.kalmangraph.add(estimated_pos, self.filter.get_positional_covariance_matrix(),
+                            [(othertank.x, othertank.y), self.target_pos, self.fire_pos])
+        #~ print [(othertank.x, othertank.y), self.target_pos, self.fire_pos]
         return commands
     
+    def get_future_pos(self, delta_t, lag=0.023):
+        delta_t += lag
+        #~ self.filter.set_F(delta_t)
+        #~ mu = self.filter.F.dot(self.filter.mu_t)
+        mu = self.filter.mu_t
+        self.filter.set_F(self.change_in_t)
+        while delta_t > 0:
+            delta_t -= self.change_in_t
+            mu = self.filter.F.dot(mu)
+        return mu[0,0], mu[3,0]
+    
     def aim(self, mytank, target_pos):
-        print target_pos
-        self.filter.set_F(0.2)
-        future_mu = self.filter.F.dot(self.filter.mu_t)
-        future_pos = (future_mu[0,0], future_mu[3, 0])
-        curr_angle = math.atan2(target_pos[1] - mytank.y, target_pos[0] - mytank.x)
-        future_angle = math.atan2(future_pos[1] - mytank.y, future_pos[0] - mytank.x)
+        confident = self.filter.is_confident_in_position()
         curr_dist = math.sqrt((target_pos[0] - mytank.x)**2 + (target_pos[1] - mytank.y)**2)
+        
+        future_pos = self.get_future_pos(curr_dist/100)#, self.change_in_t*3)
         future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
         
-        self.filter.set_F(future_dist/350)
-        fire_mu = self.filter.F.dot(self.filter.mu_t)
-        fire_pos = (fire_mu[0,0], fire_mu[3, 0])
+        fire_pos = self.get_future_pos(future_dist/100)#, self.change_in_t*3)
         fire_dist = math.sqrt((fire_pos[0] - mytank.x)**2 + (fire_pos[1] - mytank.y)**2)
         fire_angle = math.atan2(fire_pos[1] - mytank.y, fire_pos[0] - mytank.x)
-        fire_delta = abs(math.asin(8/fire_dist))
-        if abs(fire_angle - mytank.angle) < fire_angle and fire_dist <= 350:
+        fire_delta = abs(math.asin(3/fire_dist))
+        if abs(fire_angle - mytank.angle) < fire_angle and fire_dist <= 350 and confident:
             fire = True
         else:
             fire = False
         
         angvel = 2*self.normalize_angle(fire_angle - mytank.angle)
-        print mytank.angle, fire_angle, angvel
+        self.target_pos = target_pos
+        self.fire_pos = fire_pos
+        
         return Command(mytank.index, 0, angvel, fire)
     
     def get_angvel(self, myang, targetang):
         ang = targetang-myang
         ang = self.normalize_angle(ang)
-        print "Ang:", ang
         if ang < 0:
             angvel = -1
         else:
@@ -161,9 +207,6 @@ class KalmanTank(Tank):
         
         if abs(ang) < 1:
             angvel *= ang/1.5
-        
-        print angvel
-        
         return angvel
 
 def main():
