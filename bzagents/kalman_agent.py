@@ -189,14 +189,14 @@ class KalmanTank(Tank):
         temp_five = numpy.dot(self.k, temp_four)
         self.mu_t_matrix.values = temp_one + temp_five
         print "update mu"
-        # self.mu_t_matrix.print_matrix()
+        self.mu_t_matrix.print_matrix()
 
     def update_sigma_t(self):
         temp_one = numpy.dot(self.k, self.h_matrix.values)
         temp_two = self.identity_matrix.values - temp_one
         self.sigma_t_matrix.values = numpy.dot(temp_two, self.common_computation)
         print "update sigma_t"
-        # self.sigma_t_matrix.print_matrix() 
+        self.sigma_t_matrix.print_matrix() 
 
     def behave(self, time_diff, env_state):
         commands = []
