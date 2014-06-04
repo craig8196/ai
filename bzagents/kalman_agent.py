@@ -11,7 +11,7 @@ from base_tank import Tank
 from graph import KalmanHeatMapGraph
 
 class KalmanFilter(object):
-    def __init__(self, std_dev_x=6, std_dev_y=6):
+    def __init__(self, std_dev_x=5, std_dev_y=5):
         self.std_dev_x = std_dev_x
         self.std_dev_y = std_dev_y
         # covariance matrix of x and y
