@@ -12,6 +12,7 @@ from graph import KalmanHeatMapGraph
 
 class KalmanFilter(object):
     def __init__(self, std_dev_x=5, std_dev_y=5):
+        self.covariance_initial = [0.07, 0.07, 30, 0.07, 0.07, 30]
         self.std_dev_x = std_dev_x
         self.std_dev_y = std_dev_y
         # covariance matrix of x and y
@@ -21,23 +22,22 @@ class KalmanFilter(object):
         self.HT = self.H.T
         # covariance matrix for position, velocity, and acceleration for x and y
         self.sigma_x = numpy.zeros((6, 6))
-        self.sigma_x[0, 0] = 0.1
-        self.sigma_x[1, 1] = 0.1
-        self.sigma_x[2, 2] = 10
-        self.sigma_x[3, 3] = 0.1
-        self.sigma_x[4, 4] = 0.1
-        self.sigma_x[5, 5] = 10
-        #~ self.sigma_x[0, 0] = 0.1
-        #~ self.sigma_x[1, 1] = 0.1
-        #~ self.sigma_x[2, 2] = 0.1
-        #~ self.sigma_x[3, 3] = 0.1
-        #~ self.sigma_x[4, 4] = 0.1
-        #~ self.sigma_x[5, 5] = 0.1
+        self.sigma_x[0, 0] = self.covariance_initial[0]
+        self.sigma_x[1, 1] = self.covariance_initial[1]
+        self.sigma_x[2, 2] = self.covariance_initial[2]
+        self.sigma_x[3, 3] = self.covariance_initial[3]
+        self.sigma_x[4, 4] = self.covariance_initial[4]
+        self.sigma_x[5, 5] = self.covariance_initial[5]
         # initialize Newtonian physics matrix
         self.set_F()
         # covariance matrix for position, velocity, and acceleration for x and y
-        # this one gets updated each round
-        self.reset_covariance_matrix()
+        self.sigma_t = numpy.zeros((6, 6))
+        self.sigma_t[0, 0] = self.covariance_initial[0]
+        self.sigma_t[1, 1] = self.covariance_initial[1]
+        self.sigma_t[2, 2] = self.covariance_initial[2]
+        self.sigma_t[3, 3] = self.covariance_initial[3]
+        self.sigma_t[4, 4] = self.covariance_initial[4]
+        self.sigma_t[5, 5] = self.covariance_initial[5]
         # the mean position vector
         self.mu_t = numpy.zeros((6, 1))
         # the identity matrix
@@ -83,16 +83,16 @@ class KalmanFilter(object):
     def reset_covariance_matrix(self):
         # covariance matrix for position, velocity, and acceleration for x and y
         self.sigma_t = numpy.zeros((6, 6))
-        self.sigma_t[0, 0] = 25
-        self.sigma_t[1, 1] = 1
-        self.sigma_t[2, 2] = 1
-        self.sigma_t[3, 3] = 25
-        self.sigma_t[4, 4] = 1
-        self.sigma_t[5, 5] = 1
+        self.sigma_t[0, 0] = self.covariance_initial[0]
+        self.sigma_t[1, 1] = self.covariance_initial[1]
+        self.sigma_t[2, 2] = self.covariance_initial[2]
+        self.sigma_t[3, 3] = self.covariance_initial[3]
+        self.sigma_t[4, 4] = self.covariance_initial[4]
+        self.sigma_t[5, 5] = self.covariance_initial[5]
     
     def is_confident_in_position(self, std_dev=1.1):
-        if abs(self.Z[0,0] - self.mu_t[0,0]) < math.sqrt(self.sigma_t[0,0])*std_dev and \
-            abs(self.Z[1,0] - self.mu_t[3,0]) < math.sqrt(self.sigma_t[3,3])*std_dev:
+        if abs(self.Z[0,0] - self.mu_t[0,0]) < math.sqrt(self.sigma_t[0,0])*(std_dev) and \
+            abs(self.Z[1,0] - self.mu_t[3,0]) < math.sqrt(self.sigma_t[3,3])*(std_dev):
             return True
         return False
     
@@ -279,6 +279,7 @@ class KalmanTank(Tank):
         self.kalmangraph = KalmanHeatMapGraph(self.constants.worldsize)
         self.kalmangraph.start()
         self.last_time_reset = 0
+        self.last_time_aimed = 0
     
     def behave(self, time_diff, env_state):
         commands = []
@@ -296,7 +297,7 @@ class KalmanTank(Tank):
             return commands
         
         # reset the confidence we have in position, etc., every ten seconds
-        if time_diff - self.last_time_reset > 20:
+        if time_diff - self.last_time_reset > 30:
             self.filter.reset_covariance_matrix()
             print "Reset"
             self.last_time_reset = time_diff
@@ -331,29 +332,28 @@ class KalmanTank(Tank):
         return mu[0,0], mu[3,0]
     
     def aim(self, mytank, target_pos):
-        #~ confident = self.filter.is_confident_in_position()
+        confident = self.filter.is_confident_in_position()
+        # confident = True
         curr_dist = math.sqrt((target_pos[0] - mytank.x)**2 + (target_pos[1] - mytank.y)**2)
         
-        #~ future_pos = self.get_future_pos(curr_dist/100)
-        #~ future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
-        #~ future_pos = self.get_future_pos(future_dist/100)
-        #~ future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
+        future_pos = self.get_future_pos(curr_dist/120)
+        future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
         
-        fire_pos = self.get_future_pos(curr_dist/100)
+        fire_pos = self.get_future_pos(future_dist/120)
         fire_dist = math.sqrt((fire_pos[0] - mytank.x)**2 + (fire_pos[1] - mytank.y)**2)
         fire_angle = math.atan2(fire_pos[1] - mytank.y, fire_pos[0] - mytank.x)
-        fire_delta = abs(math.asin(4/fire_dist))
-        if abs(fire_angle - mytank.angle) < fire_delta and fire_dist <= 350:# and confident:
-            fire = True
+        fire_delta = abs(math.asin(5/fire_dist))
+
+        if abs(fire_angle - mytank.angle) < fire_delta and fire_dist <= 350 and confident:
+            self.fire = True
         else:
-            fire = False
+            self.fire = False
         
-        angvel = 2*self.normalize_angle(fire_angle - mytank.angle)
+        self.angvel = 2*self.normalize_angle(fire_angle - mytank.angle)
         self.target_pos = target_pos
         self.fire_pos = fire_pos
         
-        return Command(mytank.index, 0, angvel, fire)
-
+        return Command(mytank.index, 0, self.angvel, self.fire)
 
     
     def get_angvel(self, myang, targetang):
