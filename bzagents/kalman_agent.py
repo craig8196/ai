@@ -23,20 +23,21 @@ class KalmanFilter(object):
         self.sigma_x = numpy.zeros((6, 6))
         self.sigma_x[0, 0] = 0.1
         self.sigma_x[1, 1] = 0.1
-        self.sigma_x[2, 2] = 50
+        self.sigma_x[2, 2] = 10
         self.sigma_x[3, 3] = 0.1
         self.sigma_x[4, 4] = 0.1
-        self.sigma_x[5, 5] = 50
+        self.sigma_x[5, 5] = 10
+        #~ self.sigma_x[0, 0] = 0.1
+        #~ self.sigma_x[1, 1] = 0.1
+        #~ self.sigma_x[2, 2] = 0.1
+        #~ self.sigma_x[3, 3] = 0.1
+        #~ self.sigma_x[4, 4] = 0.1
+        #~ self.sigma_x[5, 5] = 0.1
         # initialize Newtonian physics matrix
         self.set_F()
         # covariance matrix for position, velocity, and acceleration for x and y
-        self.sigma_t = numpy.zeros((6, 6))
-        self.sigma_t[0, 0] = 50
-        self.sigma_t[1, 1] = 0.1
-        self.sigma_t[2, 2] = 0.1
-        self.sigma_t[3, 3] = 50
-        self.sigma_t[4, 4] = 0.1
-        self.sigma_t[5, 5] = 0.1
+        # this one gets updated each round
+        self.reset_covariance_matrix()
         # the mean position vector
         self.mu_t = numpy.zeros((6, 1))
         # the identity matrix
@@ -82,10 +83,10 @@ class KalmanFilter(object):
     def reset_covariance_matrix(self):
         # covariance matrix for position, velocity, and acceleration for x and y
         self.sigma_t = numpy.zeros((6, 6))
-        self.sigma_t[0, 0] = 100
+        self.sigma_t[0, 0] = 25
         self.sigma_t[1, 1] = 1
         self.sigma_t[2, 2] = 1
-        self.sigma_t[3, 3] = 100
+        self.sigma_t[3, 3] = 25
         self.sigma_t[4, 4] = 1
         self.sigma_t[5, 5] = 1
     
@@ -96,7 +97,7 @@ class KalmanFilter(object):
         return False
     
     def next_observed_z(self, x, y):
-        """Return the predicted location of the tank, mu_t+1."""
+        """Return the predicted position of the tank, mu_t+1."""
         Z = numpy.zeros((2, 1))
         self.Z = Z
         Z[0, 0] = x
@@ -123,7 +124,7 @@ m.values
 class KalmanTank(Tank):
     def __init__(self, bzrc, index, debug, color):
         super(KalmanTank, self).__init__(bzrc, index, debug, color)
-        self.change_in_t = 0.1
+        self.change_in_t = 0.08
         self.friction = 0
         self.position_variance = 0.1
         self.velocity_variance = 0.1
@@ -302,7 +303,8 @@ class KalmanTank(Tank):
         
         self.last_time_updated = time_diff
         # calculate estimated position
-        self.filter.set_F(time_diff - self.filter.time_from_start)
+        #~ self.filter.set_F(time_diff - self.filter.time_from_start)
+        self.filter.set_F(self.change_in_t)
         estimated_pos = self.filter.next_observed_z(othertank.x, othertank.y)
         # graph it
         self.kalmangraph.add(estimated_pos, self.filter.get_positional_covariance_matrix())
@@ -311,7 +313,7 @@ class KalmanTank(Tank):
         self.kalmangraph.add(estimated_pos, self.filter.get_positional_covariance_matrix(),
                             [(othertank.x, othertank.y), self.target_pos, self.fire_pos])
         #~ print [(othertank.x, othertank.y), self.target_pos, self.fire_pos]
-        print self.dist(self.target_pos, self.fire_pos)
+        #~ print self.dist(self.target_pos, self.fire_pos)
         return commands
         
     def dist(self, pos1, pos2):
@@ -329,17 +331,19 @@ class KalmanTank(Tank):
         return mu[0,0], mu[3,0]
     
     def aim(self, mytank, target_pos):
-        confident = self.filter.is_confident_in_position()
+        #~ confident = self.filter.is_confident_in_position()
         curr_dist = math.sqrt((target_pos[0] - mytank.x)**2 + (target_pos[1] - mytank.y)**2)
         
-        future_pos = self.get_future_pos(curr_dist/100)
-        future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
+        #~ future_pos = self.get_future_pos(curr_dist/100)
+        #~ future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
+        #~ future_pos = self.get_future_pos(future_dist/100)
+        #~ future_dist = math.sqrt((future_pos[0] - mytank.x)**2 + (future_pos[1] - mytank.y)**2)
         
-        fire_pos = self.get_future_pos(future_dist/100)
+        fire_pos = self.get_future_pos(curr_dist/100)
         fire_dist = math.sqrt((fire_pos[0] - mytank.x)**2 + (fire_pos[1] - mytank.y)**2)
         fire_angle = math.atan2(fire_pos[1] - mytank.y, fire_pos[0] - mytank.x)
-        fire_delta = abs(math.asin(3/fire_dist))
-        if abs(fire_angle - mytank.angle) < fire_angle and fire_dist <= 350 and confident:
+        fire_delta = abs(math.asin(4/fire_dist))
+        if abs(fire_angle - mytank.angle) < fire_delta and fire_dist <= 350:# and confident:
             fire = True
         else:
             fire = False
