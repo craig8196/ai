@@ -21,7 +21,7 @@ import sys
 import socket
 import time
 from threading import Lock
-from env import EnvironmentState, EnvironmentConstants
+from env import EnvironmentState, EnvironmentBeliefs
 import numpy
 
 
@@ -477,9 +477,9 @@ class BZRC:
         self.lock.release()
         return env
     
-    def get_environment_constants(self):
+    def get_environment_beliefs(self):
         self.lock.acquire()
-        con = EnvironmentConstants()
+        con = EnvironmentBeliefs()
         
         self.sendline('constants')
         self.read_ack()

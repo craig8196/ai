@@ -76,35 +76,34 @@ class ObstacleVisualization(Thread):
 
 class Grid(Thread):
     INITIAL_OBSTACLE_PROBABILITY = 0.95
-    DEFAULT_TRUE_POSITIVE = 0.25
-    DEFAULT_TRUE_NEGATIVE = 0.25
     OBSTACLE = 1
     NOT_OBSTACLE = 0
     UNKNOWN = 0.5
     
-    def __init__(self, width, height):
+    def __init__(self, width, height, true_positive=0.97, true_negative=0.90, visualize=True):
         super(Grid, self).__init__()
-        self.grid = numpy.empty((width, height))
+        self.grid = numpy.empty((int(width), int(height)))
         self.grid[:] = Grid.INITIAL_OBSTACLE_PROBABILITY
-        self.obstacle_grid = numpy.empty((width, height))
+        self.obstacle_grid = numpy.empty((int(width), int(height)))
         self.obstacle_grid[:] = Grid.UNKNOWN
         self.accessible_unknowns = [(0, 0)]
-        self.set_true_positive(Grid.DEFAULT_TRUE_POSITIVE)
-        self.set_true_negative(Grid.DEFAULT_TRUE_NEGATIVE)
+        self.set_true_positive(true_positive)
+        self.set_true_negative(true_negative)
         self.update_thresholds()
         self.events = []
         
-        self.vis = ObstacleVisualization(width, height)
-        self.add_update_event(self.vis.updated)
-        self.vis.set_external_grid(self)
-        self.vis.start()
+        if visualize:
+            self.vis = ObstacleVisualization(width, height)
+            self.add_update_event(self.vis.updated)
+            self.vis.set_external_grid(self)
+            self.vis.start()
         
         self.unknowns_update_frequency = 20.0 # number of seconds before we refresh
         self.lock = Lock()
         self.grids_to_update = ThreadSafeQueue()
         
-        self.unknowns_updater = Thread(target=self.run_updater)
-        self.unknowns_updater.start()
+        #~ self.unknowns_updater = Thread(target=self.run_updater)
+        #~ self.unknowns_updater.start()
         self.start()
     
     def run_updater(self):
@@ -119,6 +118,28 @@ class Grid(Thread):
     def run(self):
         x, y, mini_grid = self.grids_to_update.remove()
         self.update(x, y, mini_grid)
+    
+    def is_lost_or_nearest_obstacle(self, x, y):
+        """Return a tuple of the form (lost?, (x, y)) where "lost?" is True or False."""
+        obs_x, obs_y = x, y
+        total_unknown = 0
+        total_searched = 0
+        for d in range(40):
+            points = [(d+x,y),(x-d,y),(x,y-d),(x,y+d)]
+            for i,j in points:
+                if self.is_in_range(i,j):
+                    total_searched += 1
+                    if self.obstacle_grid[i,j] == Grid.UNKNOWN:
+                        total_unknown += 1
+                    elif self.obstacle_grid[i,j] == Grid.OBSTACLE and (obs_x != x or obs_y != y):
+                        obs_x, obs_y = i, j
+        return (total_unknown/total_searched) > 0.9, (obs_x, obs_y)
+    
+    def is_in_range(self, i, j):
+        ilen, jlen = self.grid.shape
+        if i >= ilen or i < 0 or j < 0 or j >= jlen:
+            return False
+        return True
     
     def is_unknown(self, x, y):
         x = int(x)
@@ -269,6 +290,26 @@ class Grid(Thread):
     def add_grid_update(self, x, y, mini_grid):
         self.grids_to_update.add((x, y, mini_grid))
     
+    def new_update_cell(self, i, j, observations):
+        # WARNING: helper function to update() do NOT acquire locks
+        s, not_s = self.grid[i,j], 1-self.grid[i,j]
+        for o in observations:
+            if o == Grid.OBSTACLE:
+                s *= self.cond_prob_obstacle_obstacle
+                not_s *= self.cond_prob_obstacle_not_obstacle
+            else:
+                s *= self.cond_prob_not_obstacle_obstacle
+                not_s *= self.cond_prob_not_obstacle_not_obstacle
+
+        self.grid[i, j] = s/(s+not_s)
+        
+        if self.grid[i, j] < self.not_obstacle_threshold:
+            self.obstacle_grid[i, j] = self.NOT_OBSTACLE
+        elif self.grid[i, j] > self.obstacle_threshold:
+            self.obstacle_grid[i, j] = self.OBSTACLE
+        else:
+            self.obstacle_grid[i, j] = 0.5
+    
     def update(self, corner_x, corner_y, mini_grid):
         """mini_grid is a numpy matrix of ones and zeros
         The corner is the starting corner in the map when rotated correctly.
@@ -276,9 +317,9 @@ class Grid(Thread):
         self.lock.acquire()
         (i_len, j_len) = mini_grid.shape
         
-        for i in xrange(0, i_len):
-            for j in xrange(0, j_len):
-                self.update_cell(i + corner_x, j + corner_y, mini_grid[i, j])
+        for i in xrange(1, i_len-1):
+            for j in xrange(1, j_len-1):
+                self.new_update_cell(i + corner_x, j + corner_y, [mini_grid[i,j], mini_grid[i-1,j], mini_grid[i,j-1], mini_grid[i+1,j], mini_grid[i,j+1]])
         
         self.notify_update_event()
         self.lock.release()

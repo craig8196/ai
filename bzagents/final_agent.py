@@ -15,32 +15,28 @@ from graph import PotentialFieldGraph
 from env import EnvironmentState
 from threading import Thread, Lock, Event
 
-class TeamManager(object):
+SHOW_VISUALIZATIONS = True
 
+class TeamManager(object):
     """Handle all command and control logic for a team of tanks."""
+    
     def __init__(self, bzrc):
         self.bzrc = bzrc
-        self.env_constants = self.bzrc.get_environment_constants()
+        self.env_beliefs = self.bzrc.get_environment_beliefs()
         self.tanks = []
-        self.corners = []
-        for i in range(0, int(self.env_constants.get_count(self.env_constants.color))):
-            self.tanks.append(PFieldTank(i, self.bzrc, self.corners, self.env_constants))
+        # Create all tanks
+        for i in range(0, int(self.env_beliefs.get_count(self.env_beliefs.color))):
+            self.tanks.append(FinalTank(i, self.bzrc))
+        # Put each tank on a thread
         for tank in self.tanks:
             tank.setDaemon(True)
             tank.start()
+        # Create Kalman Filters for all enemy tanks
+        self.env_beliefs.init_kalman_filters()
+        
 
     def play(self):
         """Start playing BZFlag!"""
-        # try:
-        #     import _tkinter
-        #     import Tkinter
-        #     from bzui import BZUI
-        #     ui = BZUI(self.tanks, self.env_constants)
-        #     ui.setDaemon(True)
-        #     ui.start()
-        # except ImportError:
-        #     print "You need Tkinter to be installed to use the graphical interface."
-        
         prev_time = time.time()
         # Continuously get the environment state and have each tank update
         try:
@@ -53,77 +49,92 @@ class TeamManager(object):
             exit(0)
     
     def tick(self, time_diff):
-        """Get a new state."""
-        env_state = self.bzrc.get_environment_state(self.env_constants.color)
+        # Get a new state
+        env_state = self.bzrc.get_environment_state(self.env_beliefs.color)
         env_state.time_diff = time_diff
+        
+        # Update enemy locations
+        self.env_beliefs.update_kalman_filters(env_state)
+        
+        # Give states to each tank
         for tank in self.tanks:
-            tank.add_env_state(env_state)
+            tank.set_env(env_state, self.env_beliefs)
+        # Collect commands
         commands = []
         for tank in self.tanks:
             tank.signal_done_updating.wait()
-            #~ tank.behave(env_state)
+            tank.signal_done_updating.clear()
             commands.append(tank.command)
         self.bzrc.do_commands(commands)
-        # print "Updated "+str(time_diff)
 
 
-class PFieldTank(Thread):
+class FinalTank(Thread):
     """Handle all command and control logic for a single tank."""
     
-    def __init__(self, index, bzrc, corners, env_constants):
-        """The brain must take in a state and produce a command."""
-        super(PFieldTank, self).__init__()
-        self.index = index # same as tank id
-        self.cg = CommandGenerator()
+    def __init__(self, index, bzrc):
+        # init Thread
+        super(FinalTank, self).__init__()
+        self.index = index
         self.bzrc = bzrc
-        self.error = 0
-        self.env_states = ThreadSafeQueue()
-        self.env_constants = env_constants
-        self.our_base = None
-        self.all_initialized = False
-
-        self.keep_running = True
-        self.graph = None
-        self.last_sensor_poll = -1.0
-        self.exploration_goal = (0, 0)
-        self.past_places = {}
+        self.env_state = None
+        self.env_beliefs = None
         self.signal_new_env = Event()
         self.signal_new_env.clear()
         self.signal_done_updating = Event()
         self.signal_done_updating.clear()
         self.command = None
-
+        self.keep_running = True
+        self.all_initialized = False
         self.behaviors = []
         self.behavior = None
-            
+    
+    def set_env(self, env_state, env_beliefs):
+        # Signal new state is set
+        self.env_state = env_state
+        self.env_beliefs = env_beliefs
+        self.signal_new_env.set()
+    
     def stop(self):
         self.keep_running = False
+    
+    def run(self):
+        while self.keep_running:
+            self.signal_new_env.wait()
+            self.signal_new_env.clear()
+            self.behave()
+            self.signal_done_updating.set()
+    
+    def behave(self):
+        if not self.all_initialized:
+            self.initialize_states()
+            self.all_initialized = True
+        
+        self.update_behaviors()
+        
+        mytank = self.env_state.mytanks[self.index]
+        self.check_if_moved(mytank.x, mytank.y, self.env_state.time_diff)
 
+        if not self.behavior:
+            (value, behavior) = self.get_most_useful_behavior()
+            self.behavior = behavior
+            self.behavior.last_use_start_time = self.env_state.time_diff
+        else:
+            print self.behavior.identifier
+            if self.env_state.time_diff - self.behavior.last_use_start_time >= self.behavior.min_time:
+                (value, behavior) = self.get_most_useful_behavior()
+                self.behavior = behavior
+                self.behavior.last_use_start_time = self.env_state.time_diff
+
+        self.command = self.behavior.behave()
+    
     def initialize_states(self):
         self.last_time_moved = self.env_state.time_diff
         mytank = self.env_state.mytanks[self.index]
         self.prev_x = mytank.x
         self.prev_y = mytank.y
-
-        self.color = self.env_constants.color
-
-        for base in self.env_constants.bases:
-            if base.color == self.color:
-                self.our_base = base
-
-        self.ourbase_center_y = (self.our_base.corner3_y + self.our_base.corner1_y) / 2.0
-        self.ourbase_center_x = (self.our_base.corner2_x + self.our_base.corner1_x) / 2.0
+        self.color = self.env_beliefs.color
+        self.ourbase_center_x, self.ourbase_center_y = self.env_beliefs.get_base_location(self.env_beliefs.color)
     
-    def add_env_state(self, env_state):
-        self.env_state = env_state
-        self.signal_done_updating.clear()
-        self.signal_new_env.set()
-        if not self.all_initialized:
-            self.initialize_states()
-            self.all_initialized = True
-
-        self.update_behaviors()
-
     def update_behaviors(self):
         if not self.behaviors:
             self.init_behaviors()
@@ -136,10 +147,10 @@ class PFieldTank(Thread):
 
         #create the behaviors for capturing enemy flags
         for i, enemyflag in enumerate(self.env_state.enemyflags):
-            self.behaviors.append(SeekGoalBehavior("flag" + enemyflag.color, self.mytank, 170, 2, 0.5, self.env_constants.color, i))
+            self.behaviors.append(SeekGoalBehavior("flag" + enemyflag.color, self.mytank, 170, 2, 0.5, self.env_beliefs.color, i))
 
         #create the behavior for bringing a captured flag back to our base
-        self.behaviors.append(SeekGoalBehavior("base", self.mytank, 400, 5, 0.5, self.env_constants.color, -1))
+        self.behaviors.append(SeekGoalBehavior("base", self.mytank, 400, 5, 0.5, self.env_beliefs.color, -1))
 
         #create the behaviors for shooting an enemy tank
         for enemytank in self.env_state.enemytanks:
@@ -155,7 +166,8 @@ class PFieldTank(Thread):
         for behavior in self.behaviors:
             if type(behavior) is DestroyEnemyBehavior:
                 enemy_tank = self.env_state.enemytanks[enemy_index]
-                behavior.update(self.mytank, curr_time, enemy_tank.x, enemy_tank.y)
+                location = self.env_beliefs.enemy_locations[enemy_tank.callsign]
+                behavior.update(self.mytank, curr_time, location[0], location[1])
                 enemy_index += 1
             elif type(behavior) is SeekGoalBehavior:
                 if 'flag' in behavior.identifier:
@@ -168,18 +180,6 @@ class PFieldTank(Thread):
             elif type(behavior) is GetUnstuckBehavior:
                 behavior.update(self.mytank, curr_time, self.mytank.x, self.mytank.y)
     
-    def remove_env_state(self):
-        self.signal_new_env.wait()
-        self.signal_new_env.clear()
-        return self.env_state
-    
-    def run(self):
-        while self.keep_running:
-            s = self.remove_env_state()
-            if self.keep_running:
-                self.behave(s)
-                self.signal_done_updating.set()
-
     def get_most_useful_behavior(self):
         curr_max = -sys.maxint
         best_behavior = None
@@ -193,31 +193,13 @@ class PFieldTank(Thread):
             if value >= curr_max:
                 curr_max = value
                 best_behavior = b
-        return max, best_behavior
+        return curr_max, best_behavior
 
     def check_if_moved(self, x, y, curr_time):
         if abs(self.prev_x - x) >= 5 or abs(self.prev_y - y) >= 5:
             self.prev_x = x
             self.prev_y = y
             self.last_time_moved = curr_time
-
-    def behave(self, env_state):
-        if self.behavior:
-            print self.behavior.identifier
-        mytank = env_state.mytanks[self.index]
-        self.check_if_moved(mytank.x, mytank.y, env_state.time_diff)
-
-        if not self.behavior:
-            (value, behavior) = self.get_most_useful_behavior()
-            self.behavior = behavior
-            self.behavior.last_use_start_time = env_state.time_diff
-        else:
-            if env_state.time_diff - self.behavior.last_use_start_time >= self.behavior.min_time:
-                (value, behavior) = self.get_most_useful_behavior()
-                self.behavior = behavior
-                self.behavior.last_use_start_time = env_state.time_diff
-
-        self.command = self.behavior.behave()
 
 class Behavior(object):
     def __init__(self, name, tank, priority_value, min_time, update_frequency):
@@ -433,6 +415,14 @@ class TankHelper(object):
 
     def get_distance(self, x1, y1, x2, y2):
         return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+    
+    def world_to_grid_coord(self, x, y):
+        worldsize = self.env_constants.worldsize
+        return int(x + worldsize/2), int(y + worldsize/2)
+    
+    def grid_to_world_coord(self, x, y):
+        worldsize = self.env_constants.worldsize
+        return x - worldsize/2, y - worldsize/2
 
 class PotentialFields(object):
     from numpy import linspace

@@ -20,11 +20,10 @@ from threading import Thread, Lock, Event
 
 class TeamManager(object):
 
-
     """Handle all command and control logic for a team of tanks."""
     def __init__(self, bzrc):
         self.bzrc = bzrc
-        self.env_constants = self.bzrc.get_environment_constants()
+        self.env_constants = self.bzrc.get_environment_beliefs()
         self.tanks = []
         self.corners = []
         for i in range(0, int(self.env_constants.get_count(self.env_constants.color))):
