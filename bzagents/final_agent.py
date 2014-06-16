@@ -122,8 +122,6 @@ class PFieldTank(Thread):
             self.initialize_states()
             self.all_initialized = True
 
-        self.update_behaviors()
-
     def update_behaviors(self):
         if not self.behaviors:
             self.init_behaviors()
@@ -136,17 +134,17 @@ class PFieldTank(Thread):
 
         #create the behaviors for capturing enemy flags
         for i, enemyflag in enumerate(self.env_state.enemyflags):
-            self.behaviors.append(SeekGoalBehavior("flag" + enemyflag.color, self.mytank, 170, 2, 0.5, self.env_constants.color, i))
+            self.behaviors.append(SeekGoalBehavior("flag" + enemyflag.color, self.mytank, 230, 3, 0.5, self.env_constants.color, i))
 
         #create the behavior for bringing a captured flag back to our base
         self.behaviors.append(SeekGoalBehavior("base", self.mytank, 400, 5, 0.5, self.env_constants.color, -1))
 
         #create the behaviors for shooting an enemy tank
         for enemytank in self.env_state.enemytanks:
-            self.behaviors.append(DestroyEnemyBehavior("enemytank", self.mytank, 150, 7, 0.5))
+            self.behaviors.append(DestroyEnemyBehavior("enemytank", self.mytank, 280, 6, 0.5))
 
         #create the behavior for getting unstuck
-        self.behaviors.append(GetUnstuckBehavior("unstuck", self.mytank, 300, 3, 0.5))
+        self.behaviors.append(GetUnstuckBehavior("unstuck", self.mytank, 600, 5, 0.5))
 
     def update_existing_behaviors(self):
         self.mytank = self.env_state.mytanks[self.index]
@@ -182,7 +180,7 @@ class PFieldTank(Thread):
 
     def get_most_useful_behavior(self):
         curr_max = -sys.maxint
-        best_behavior = None
+        best_behavior = self.behaviors[0]
         for b in self.behaviors:
             if type(b) is DestroyEnemyBehavior:
                 value = b.evaluate_utility(self.env_state.myflag)
@@ -196,12 +194,13 @@ class PFieldTank(Thread):
         return max, best_behavior
 
     def check_if_moved(self, x, y, curr_time):
-        if abs(self.prev_x - x) >= 5 or abs(self.prev_y - y) >= 5:
+        if abs(self.prev_x - x) >= 7 or abs(self.prev_y - y) >= 7:
             self.prev_x = x
             self.prev_y = y
             self.last_time_moved = curr_time
 
     def behave(self, env_state):
+        self.update_behaviors()
         if self.behavior:
             print self.behavior.identifier
         mytank = env_state.mytanks[self.index]
@@ -258,14 +257,19 @@ class DestroyEnemyBehavior(Behavior):
         if self.current_distance == 0:
             return 0
         elif self.th.get_distance(self.target_x, modifier.x, self.target_y, modifier.y) < 10:
-            return self.priority_value * 2 * (1.0 / self.current_distance)
-        else:
+            return self.priority_value * 3 * (1.0 / self.current_distance)
+        elif self.current_distance < 90:
             return self.priority_value * (1.0 / self.current_distance)
+        else:
+            return 0
 
     def behave(self):
         fire_dist = self.th.get_distance(self.mytank.x, self.mytank.y, self.target_x, self.target_y)
         fire_angle = math.atan2(self.target_y - self.mytank.y, self.target_x - self.mytank.x)
-        fire_delta = abs(math.asin(5/fire_dist))
+        if abs(5.0 / fire_dist) <= 1:
+            fire_delta = abs(5.0 / fire_dist)
+        else:
+            fire_delta = 0
 
         if abs(fire_angle - self.mytank.angle) < fire_delta and fire_dist <= 350:
             fire = True
@@ -326,12 +330,10 @@ class GetUnstuckBehavior(Behavior):
 
     def evaluate_utility(self, modifier):
         #in this case, the modifier is how long ago the last time the tank moved was
-        if modifier < 3:
-            return 0
-        elif self.current_distance == 0:
+        if modifier < 2:
             return 0
         else:
-            return self.priority_value * (1.0 / self.current_distance)
+            return self.priority_value
 
     def behave(self):
         bag_o_fields = []
@@ -348,7 +350,7 @@ class GetUnstuckBehavior(Behavior):
         
         dx, dy = pfield_function(self.mytank.x, self.mytank.y)
 
-        return Command(self.mytank.index, 0.7, 0.5, True)
+        return Command(self.mytank.index, 0.8, 0.4, True)
 
         # return self.cg.move_to_position(self.mytank, self.mytank.x + dx, self.mytank.y + dy)        
 
@@ -356,6 +358,7 @@ class CommandGenerator(object):
     def __init__(self):
         self.varying_speeds_index = 0
         self.varying_speeds = [1.0, 0.9, 0.8, 0.7, 0.5, -1, -0.6]
+        self.th = TankHelper()
 
     def normalize_angle(self, angle):
         """Make any angle be between +/- pi."""
@@ -378,7 +381,12 @@ class CommandGenerator(object):
         target_angle = math.atan2(target_y - tank.y,
                                   target_x - tank.x)
         relative_angle = self.normalize_angle(target_angle - tank.angle)
-        return Command(tank.index, 1, 2 * relative_angle, True)
+
+        if self.th.get_distance(tank.x, tank.y, target_x, target_y) < 15:
+            speed = 0.7
+        else:
+            speed = 1
+        return Command(tank.index, speed, 2 * relative_angle, True)
 
     def move_to_position_varying_speed(self, tank, target_x, target_y, num_iterations):
         self.current_speed_iteration += 1
