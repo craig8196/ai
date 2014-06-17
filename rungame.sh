@@ -1,6 +1,1 @@
-./bin/bzrflag --world=maps/four_ls.bzw --friendly-fire --red-port=50100 --green-port=50101 --purple-port=50102 --blue-port=50103 $@ &
-sleep 2
-python bzagents/agent0.py localhost 50100 &
-python bzagents/agent0.py localhost 50101 &
-python bzagents/agent0.py localhost 50102 &
-python bzagents/pfield_team_agent.py localhost 50103 &
+python bin/bzrflag --friendly-fire --red-port=60100 --green-port=60101 --purple-port=60102 --blue-port=60103 --default-posnoise=3 --time-limit=240 --max-shots=3 --respawn-time=240 --seed=0 --world="maps/small_four_ls.bzw" --default-tanks=10 --window-size=580x580 --default-true-positive=.97 --default-true-negative=.9 --occgrid-width=100 --no-report-obstacles

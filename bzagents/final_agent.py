@@ -95,6 +95,8 @@ class PFieldTank(Thread):
 
         self.behaviors = []
         self.behavior = None
+        self.ourbase_center_y = 0
+        self.ourbase_center_x = 0
             
     def stop(self):
         self.keep_running = False
@@ -134,17 +136,17 @@ class PFieldTank(Thread):
 
         #create the behaviors for capturing enemy flags
         for i, enemyflag in enumerate(self.env_state.enemyflags):
-            self.behaviors.append(SeekGoalBehavior("flag" + enemyflag.color, self.mytank, 230, 3, 0.5, self.env_constants.color, i))
+            self.behaviors.append(SeekGoalBehavior("flag" + enemyflag.color, self.mytank, 350, 3, 0.3, self.env_constants.color, i))
 
         #create the behavior for bringing a captured flag back to our base
-        self.behaviors.append(SeekGoalBehavior("base", self.mytank, 400, 5, 0.5, self.env_constants.color, -1))
+        self.behaviors.append(SeekGoalBehavior("base", self.mytank, 450, 5, 0.3, self.env_constants.color, -1))
 
         #create the behaviors for shooting an enemy tank
         for enemytank in self.env_state.enemytanks:
-            self.behaviors.append(DestroyEnemyBehavior("enemytank", self.mytank, 280, 6, 0.5))
+            self.behaviors.append(DestroyEnemyBehavior("enemytank", self.mytank, 280, 6, 0.3))
 
         #create the behavior for getting unstuck
-        self.behaviors.append(GetUnstuckBehavior("unstuck", self.mytank, 600, 5, 0.5))
+        self.behaviors.append(GetUnstuckBehavior("unstuck", self.mytank, 600, 5, 0.3))
 
     def update_existing_behaviors(self):
         self.mytank = self.env_state.mytanks[self.index]
@@ -386,7 +388,7 @@ class CommandGenerator(object):
             speed = 0.7
         else:
             speed = 1
-        return Command(tank.index, speed, 2 * relative_angle, True)
+        return Command(tank.index, speed, 2 * relative_angle, False)
 
     def move_to_position_varying_speed(self, tank, target_x, target_y, num_iterations):
         self.current_speed_iteration += 1
